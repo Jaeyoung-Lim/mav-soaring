@@ -48,10 +48,11 @@ class ThermalSoaring
   
     bool is_in_thermal_;
 
-    Eigen::Vector3d p_targ_, v_targ_;
     Eigen::Vector3d mavPos_, mavVel;
     Eigen::Vector3d mavVel_, mavRate_;
     Eigen::Vector4d mavAtt_;
+    Eigen::Vector3d thermal_position_;
+
 
     ThermalEstimator thermal_estimator_;
 

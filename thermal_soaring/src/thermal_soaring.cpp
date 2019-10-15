@@ -23,12 +23,11 @@ ThermalSoaring::~ThermalSoaring() {
 }
 
 void ThermalSoaring::cmdloopCallback(const ros::TimerEvent& event){
-    p_targ_ << 0.0, 0.0, 20.0;
-    v_targ_ << 0.0, 0.0, 0.0;
 
     PubPositionSetpointRaw();
   
-  if(is_in_thermal_){
+  if(thermal_estimator_.IsInThermal()){
+    thermal_position_ = thermal_estimator_.getThermalPosition();
     //TODO: Set loiter setpoint
 
   }
@@ -36,7 +35,6 @@ void ThermalSoaring::cmdloopCallback(const ros::TimerEvent& event){
 
 void ThermalSoaring::statusloopCallback(const ros::TimerEvent& event){
   //TODO: Detect Thermal
-  bool thermal_detected = thermal_estimator_.IsInThermal();
 
   //TODO: Run Thermal estimator
   thermal_estimator_.UpdateState(mavPos_, mavVel_);
@@ -56,12 +54,9 @@ void ThermalSoaring::PubPositionSetpointRaw(){
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = "map";
   msg.type_mask = 0x3000;
-  msg.position.x = p_targ_(0);
-  msg.position.y = p_targ_(1);
-  msg.position.z = p_targ_(2);
-  msg.velocity.x = v_targ_(0);
-  msg.velocity.y = v_targ_(1);
-  msg.velocity.z = v_targ_(2);
+  msg.position.x = thermal_position_(0);
+  msg.position.y = thermal_position_(1);
+  msg.position.z = thermal_position_(2);
   setpointraw_pub_.publish(msg);
 
 }

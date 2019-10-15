@@ -66,3 +66,7 @@ double ThermalEstimator::getSpecificEnergyRate(){
 
   return e_dot;
 }
+
+Eigen::Vector3d ThermalEstimator::getThermalPosition(){
+  return thermal_center_;
+}

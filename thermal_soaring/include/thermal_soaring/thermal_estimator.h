@@ -35,6 +35,7 @@ class ThermalEstimator
 
     Eigen::Vector3d position_;
     Eigen::Vector3d velocity_;
+    Eigen::Vector3d thermal_center_;
 
     double getNettoVariometer();
     double getDragPolarCurve(double airspeed, double bank_angle);
@@ -45,6 +46,7 @@ class ThermalEstimator
     virtual ~ ThermalEstimator();
     void UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity);
     bool IsInThermal();
+    Eigen::Vector3d getThermalPosition();
 };
 
 
