@@ -12,7 +12,8 @@ add_definitions(-std=c++11)
 # LIBRARIES #
 #############
 cs_add_library(${PROJECT_NAME}
-  src/thermal_soaring.cpp 
+  src/thermal_soaring.cpp
+  src/thermal_estimator.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
