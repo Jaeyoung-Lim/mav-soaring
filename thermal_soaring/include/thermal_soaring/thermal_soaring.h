@@ -54,6 +54,7 @@ class ThermalSoaring
     Eigen::Vector3d mavVel_, mavRate_;
     Eigen::Vector4d mavAtt_;
     Eigen::Vector3d thermal_position_;
+    Eigen::Vector3d target_position_;
     Eigen::Vector3d wind_velocity_;
 
 

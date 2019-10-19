@@ -15,7 +15,7 @@ ThermalSoaring::ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle&
 
   mavpose_sub_ = nh_.subscribe("/mavros/local_position/pose", 1, &ThermalSoaring::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
   mavtwist_sub_ = nh_.subscribe("/mavros/local_position/velocity_local", 1, &ThermalSoaring::mavtwistCallback, this,ros::TransportHints().tcpNoDelay());
-  windest_sub_ = nh_.subscrive("/mavros/windestimation", 1, &ThermalSoaring::windestimationCallback, this, ros::TransportHints().tcpNoDelay());
+  windest_sub_ = nh_.subscribe("/mavros/windestimation", 1, &ThermalSoaring::windestimationCallback, this, ros::TransportHints().tcpNoDelay());
 
   setpointraw_pub_ = nh_.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 1);
 
@@ -25,20 +25,20 @@ ThermalSoaring::~ThermalSoaring() {
 }
 
 void ThermalSoaring::cmdloopCallback(const ros::TimerEvent& event){
-
-    PubPositionSetpointRaw();
   
   if(thermal_estimator_.IsInThermal()){
-    thermal_position_ = thermal_estimator_.getThermalPosition();
-    //TODO: Set loiter setpoint
+    target_position_ = thermal_estimator_.getThermalPosition();
 
+  } else {
+    //TODO: Add exploration logic
   }
+
+  PubPositionSetpointRaw();
+
 }
 
 void ThermalSoaring::statusloopCallback(const ros::TimerEvent& event){
-  //TODO: Detect Thermal
 
-  //TODO: Run Thermal estimator
   thermal_estimator_.UpdateState(mavPos_, mavVel_);
 
   //TODO: Evaluate waypoint to decide if it is reachable with glide slope
@@ -56,9 +56,9 @@ void ThermalSoaring::PubPositionSetpointRaw(){
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = "map";
   msg.type_mask = 0x3000;
-  msg.position.x = thermal_position_(0);
-  msg.position.y = thermal_position_(1);
-  msg.position.z = thermal_position_(2);
+  msg.position.x = target_position_(0);
+  msg.position.y = target_position_(1);
+  msg.position.z = target_position_(2);
   setpointraw_pub_.publish(msg);
 
 }
@@ -85,8 +85,8 @@ void ThermalSoaring::mavtwistCallback(const geometry_msgs::TwistStamped& msg){
 }
 
 void ThermalSoaring::windestimationCallback(const geometry_msgs::TwistWithCovarianceStamped& msg){
-  wind_velocity_(0) = msg.twist.linear.x;
-  wind_velocity_(1) = msg.twist.linear.y;
-  wind_velocity_(2) = msg.twist.linear.z;
+  wind_velocity_(0) = msg.twist.twist.linear.x;
+  wind_velocity_(1) = msg.twist.twist.linear.y;
+  wind_velocity_(2) = msg.twist.twist.linear.z;
 
 }
