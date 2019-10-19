@@ -17,6 +17,7 @@
 #include <mavros_msgs/PositionTarget.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <thermal_soaring/thermal_estimator.h>
 
 using namespace std;
@@ -43,6 +44,7 @@ class ThermalSoaring
     ros::Publisher setpointraw_pub_;
     ros::Subscriber mavpose_sub_;
     ros::Subscriber mavtwist_sub_;
+    ros::Subscriber windest_sub_;
 
     ros::Timer cmdloop_timer_, statusloop_timer_;
   
@@ -52,6 +54,7 @@ class ThermalSoaring
     Eigen::Vector3d mavVel_, mavRate_;
     Eigen::Vector4d mavAtt_;
     Eigen::Vector3d thermal_position_;
+    Eigen::Vector3d wind_velocity_;
 
 
     ThermalEstimator thermal_estimator_;
@@ -61,6 +64,7 @@ class ThermalSoaring
     void PubPositionSetpointRaw();
     void mavposeCallback(const geometry_msgs::PoseStamped& msg);
     void mavtwistCallback(const geometry_msgs::TwistStamped& msg);
+    void windestimationCallback(const geometry_msgs::TwistWithCovarianceStamped& msg);
 
   public:
     ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);

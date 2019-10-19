@@ -15,6 +15,8 @@ ThermalSoaring::ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle&
 
   mavpose_sub_ = nh_.subscribe("/mavros/local_position/pose", 1, &ThermalSoaring::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
   mavtwist_sub_ = nh_.subscribe("/mavros/local_position/velocity_local", 1, &ThermalSoaring::mavtwistCallback, this,ros::TransportHints().tcpNoDelay());
+  windest_sub_ = nh_.subscrive("/mavros/windestimation", 1, &ThermalSoaring::windestimationCallback, this, ros::TransportHints().tcpNoDelay());
+
   setpointraw_pub_ = nh_.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 1);
 
 }
@@ -80,4 +82,11 @@ void ThermalSoaring::mavtwistCallback(const geometry_msgs::TwistStamped& msg){
   mavRate_(1) = msg.twist.angular.y;
   mavRate_(2) = msg.twist.angular.z;
   
+}
+
+void ThermalSoaring::windestimationCallback(const geometry_msgs::TwistWithCovarianceStamped& msg){
+  wind_velocity_(0) = msg.twist.linear.x;
+  wind_velocity_(1) = msg.twist.linear.y;
+  wind_velocity_(2) = msg.twist.linear.z;
+
 }
