@@ -30,9 +30,10 @@ ThermalEstimator::~ThermalEstimator() {
   //Destructor
 }
 
-void ThermalEstimator::UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity){
+void ThermalEstimator::UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity, Eigen::Vector3d wind_velocity){
   position_ = position;
   velocity_ = velocity;
+  wind_velocity_ = wind_velocity;
 
   //TODO: Subscribe wind velocity
   //Compute Kalman gains
@@ -41,8 +42,10 @@ void ThermalEstimator::UpdateState(Eigen::Vector3d position, Eigen::Vector3d vel
   K_kalman_ = thermal_state_covariance_ * H_ / den;
   //Update states
   double measurement;
+  //TODO: Get correct measurements
   thermal_state_ = thermal_state_ + K_kalman_ * (measurement - ObservationFunction(thermal_state_));
   //Covariance update
+  thermal_state_covariance_ = thermal_state_covariance_ + Q_;
 }
 
 bool ThermalEstimator::IsInThermal(){
@@ -53,7 +56,8 @@ bool ThermalEstimator::IsInThermal(){
 double ThermalEstimator::getNettoVariometer(){
   double netto_variometer, vz, e_dot;
   double phi = 0.0;
-  
+
+  //TODO: Subscribe to bank angles  
   vz = getDragPolarCurve(velocity_.norm(), phi);
   e_dot = getSpecificEnergyRate();
   netto_variometer = e_dot + vz;

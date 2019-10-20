@@ -39,6 +39,7 @@ class ThermalEstimator
     Eigen::Vector3d position_;
     Eigen::Vector3d velocity_;
     Eigen::Vector3d thermal_center_;
+    Eigen::Vector3d wind_velocity_;
     Eigen::Vector4d thermal_state_;
     Eigen::Matrix4d thermal_state_covariance_;
     Eigen::Vector4d Q_vector_;
@@ -58,7 +59,7 @@ class ThermalEstimator
   public:
     ThermalEstimator(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
     virtual ~ ThermalEstimator();
-    void UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity);
+    void UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity, Eigen::Vector3d wind_velocity);
     bool IsInThermal();
     Eigen::Vector3d getThermalPosition();
 };
