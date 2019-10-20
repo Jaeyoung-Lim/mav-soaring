@@ -23,7 +23,7 @@
 using namespace std;
 using namespace Eigen;
 
-uint16_t SETPOINT_MODE_SOAR = 0x5000;
+uint16_t SETPOINT_MODE_SOAR = 0x8000;
 uint16_t SETPOINT_MODE_CRUISE = 0x3000;
 double SOAR_ALT_CUTOFF = 70.0;
 double SOAR_ALT_MAX = 100.0;
