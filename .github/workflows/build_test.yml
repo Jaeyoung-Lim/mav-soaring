@@ -30,3 +30,12 @@ jobs:
         rosdep install --from-paths src --ignore-src -y --rosdistro $ROS_DISTRO
         catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCATKIN_ENABLE_TESTING=False
         catkin build -j$(nproc) -l$(nproc)
+    - name: unit_tests
+      working-directory:
+      run: |
+        cd $HOME/catkin_ws/src
+        catkin config --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCATKIN_ENABLE_TESTING=True
+        catkin build thermal_soaring --no-deps -v -i --catkin-make-args tests
+        source $HOME/catkin_ws/devel/setup.bash
+        status=0 && for f in $HOME/catkin_ws/devel/lib/*/*-test; do $f || exit 1; done
+      shell: bash
