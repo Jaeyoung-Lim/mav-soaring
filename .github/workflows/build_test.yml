@@ -3,7 +3,7 @@ name: Build Test
 on: [push]
 
 jobs:
-  kineticbuild:
+  melodicbuild:
     runs-on: ubuntu-latest
     container: px4io/px4-dev-ros-melodic:2019-10-24
     steps:
