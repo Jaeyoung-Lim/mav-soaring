@@ -21,7 +21,7 @@ ThermalEstimator::ThermalEstimator(const ros::NodeHandle& nh, const ros::NodeHan
 
   //TODO: Read noise configurations from parameters
   R_ = 0.01;
-  Q_vector_ << 1.0, 1.0, 1.0;
+  Q_vector_ << 1.0, 1.0, 1.0, 1.0;
   Q_ = Q_vector_.asDiagonal();
 
 }
