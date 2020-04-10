@@ -33,30 +33,28 @@ ThermalEstimator::~ThermalEstimator() {
 
 void ThermalEstimator::UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity, Eigen::Vector4d attitude, Eigen::Vector3d wind_velocity){
   //Update States
-  position_ = position;
-  prev_velocity_ = velocity_;
-  velocity_ = velocity;
-  vehicle_attitude_ = attitude;
   wind_velocity_ = wind_velocity;
 
   //Detect Thermal
-  double netto_signal = getNettoVariometer();
+  double netto_signal = getNettoVariometer(velocity);
   vehicle_in_thermal_ = bool(netto_signal > soaring_threshold_);
 
   //Estimate 
   ///Compute Kalman gains
-  Eigen::Vector4d H_ = ObservationProcess(thermal_state_);
-  double den = H_.transpose() * thermal_state_covariance_ * H_ + R_;
-  K_kalman_ = thermal_state_covariance_ * H_ / den;
+  // Eigen::Vector4d H_ = ObservationProcess(thermal_state_);
+  // double den = H_.transpose() * thermal_state_covariance_ * H_ + R_;
+  // K_kalman_ = thermal_state_covariance_ * H_ / den;
 
-  ///Update states
-  double measurement;
-  ///TODO: Get correct measurements
+  // ///Update states
+  // double measurement;
+  // ///TODO: Get correct measurements
 
-  thermal_state_ = thermal_state_ + K_kalman_ * (measurement - ObservationFunction(thermal_state_));
+  // thermal_state_ = thermal_state_ + K_kalman_ * (measurement - ObservationFunction(thermal_state_));
 
-  ///Covariance update
-  thermal_state_covariance_ = thermal_state_covariance_ + Q_;
+  // ///Covariance update
+  // thermal_state_covariance_ = thermal_state_covariance_ + Q_;
+
+  prev_velocity_ = velocity;
 }
 
 void ThermalEstimator::reset() {
@@ -69,14 +67,14 @@ bool ThermalEstimator::IsInThermal(){
   return vehicle_in_thermal_;
 }
 
-double ThermalEstimator::getNettoVariometer(){
+double ThermalEstimator::getNettoVariometer(Eigen::Vector3d velocity){
   double netto_variometer, vz, e_dot;
   double phi = 0.0;
 
   //TODO: Subscribe to bank angles
   //TODO: Get airspeed properly
-  vz = getDragPolarCurve(velocity_.norm(), phi);
-  e_dot = getSpecificEnergyRate();
+  vz = getDragPolarCurve(velocity.norm(), phi);
+  e_dot = getSpecificEnergyRate(velocity, prev_velocity_);
   netto_variometer = e_dot + vz;
 
   // std::cout << "e_dot: "<< e_dot  << std::endl;
@@ -99,13 +97,13 @@ double ThermalEstimator::getDragPolarCurve(double airspeed, double bank_angle){
   return v_z;
 }
 
-double ThermalEstimator::getSpecificEnergyRate(){
+double ThermalEstimator::getSpecificEnergyRate(Eigen::Vector3d velocity, Eigen::Vector3d prev_velocity){
   double e_dot, v_dot, h_dot;
   double dt = 1.0;
 
-  v_dot = (velocity_.norm() - prev_velocity_.norm()) / dt;
-  h_dot = velocity_(2);
-  e_dot = h_dot + velocity_.norm() * v_dot / g_;
+  v_dot = (velocity.norm() - prev_velocity_.norm()) / dt;
+  h_dot = velocity(2);
+  e_dot = h_dot + velocity.norm() * v_dot / g_;
 
   return e_dot;
 }
