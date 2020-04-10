@@ -23,9 +23,8 @@ class ThermalEstimator
   private:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
-
-    bool thermal_detected_;
-
+  
+    //Parameters
     double K_;
     const double g_ = 9.8;
     double mass_;
@@ -33,15 +32,23 @@ class ThermalEstimator
     double A_wing_;
     double C_D0_;
     double B_;
-
     double R_;
+    double soaring_threshold_ = 0.1;
 
-    Eigen::Vector3d position_;
-    Eigen::Vector3d velocity_;
-    Eigen::Vector3d thermal_center_;
-    Eigen::Vector3d wind_velocity_;
+
+    //Estimator States
+    bool vehicle_in_thermal_;
     Eigen::Vector4d thermal_state_;
     Eigen::Matrix4d thermal_state_covariance_;
+
+    //Vehicle State
+    Eigen::Vector3d position_;
+    Eigen::Vector3d velocity_;
+    Eigen::Vector3d prev_velocity_;
+    Eigen::Vector4d vehicle_attitude_;
+    Eigen::Vector3d thermal_center_;
+    Eigen::Vector3d wind_velocity_;
+
     Eigen::Vector4d Q_vector_;
     Eigen::Vector4d K_kalman_;
     Eigen::Vector4d H_;
@@ -59,7 +66,8 @@ class ThermalEstimator
   public:
     ThermalEstimator(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
     virtual ~ ThermalEstimator();
-    void UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity, Eigen::Vector3d wind_velocity);
+    void UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity, Eigen::Vector4d attitude, Eigen::Vector3d wind_velocity);
+    void reset();
     bool IsInThermal();
     Eigen::Vector3d getThermalPosition();
 };
