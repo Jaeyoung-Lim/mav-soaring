@@ -57,22 +57,18 @@ void ThermalSoaring::statusloopCallback(const ros::TimerEvent& event){
 void ThermalSoaring::runFreeSoar() {
   flight_mode_ = SETPOINT_MODE_SOAR;
 
-  thermal_estimator_.UpdateState(mavPos_, mavVel_, wind_velocity_);
+  thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_);
 
   bool found_thermal = thermal_estimator_.IsInThermal();
 
   //TODO: Check if thermal is reachable
 
-
-  // target_position_(0) = 0.0;
-  // target_position_(1) = 0.0;
-  // target_position_(2) = 10.0;
-
-  //TODO: Evaluate waypoint to decide if it is reachable with glide slope
+  //TODO: Do reachability analysis //////////////////////////////////
+  //Evaluate waypoint to decide if it is reachable with glide slope
   // If the mission waypoint is unreachable, search for thermal
   // If mission point is reachable, move to mission point
 
-  //TODO: If not in thermal, keep track if the launch point is reachable. If not return to Home
+  //If not in thermal, keep track if the launch point is reachable. If not return to Home
   //This should be optional, in case the vehicle is powered
 
   bool engage_thermal_soaring = false;  
@@ -81,6 +77,11 @@ void ThermalSoaring::runFreeSoar() {
   if ( mavPos_(2) < SOAR_ALT_MIN ) {
     std::cout << "State Transition to: STATE_REACH_ALTITUDE from: STATE_FREE_SOAR" << std::endl;
     controller_state_ = CONTROLLER_STATE::STATE_REACH_ALTITUDE;
+
+    target_position_(0) = mavPos_(0);
+    target_position_(1) = mavPos_(1);
+    target_position_(2) = SOAR_ALT_CUTOFF;
+
     return;
   } else if (engage_thermal_soaring) {
     std::cout << "State Transition to: STATE_THERMAL_SOAR from: STATE_FREE_SOAR" << std::endl;
@@ -96,14 +97,13 @@ void ThermalSoaring::runReachAltitude() {
 
   flight_mode_ = SETPOINT_MODE_CRUISE;
 
-  target_position_(0) = mavPos_(0);
-  target_position_(1) = mavPos_(1);
-  target_position_(2) = SOAR_ALT_CUTOFF;
   //TODO: This makes the vehicle launch upwards
 
   if ( mavPos_(2) >= SOAR_ALT_CUTOFF ) {
     std::cout << "State Transition to: STATE_FREE_SOAR from: STATE_REACH_ALTITUDE" << std::endl;
     controller_state_ = CONTROLLER_STATE::STATE_FREE_SOAR;
+    thermal_estimator_.reset();
+    //TODO: Reinitialize thermal estimator
     return;
   } else {
     controller_state_ = CONTROLLER_STATE::STATE_REACH_ALTITUDE;
@@ -115,8 +115,10 @@ void ThermalSoaring::runThermalSoar() {
   // If altitude is too high, exit thermal
   flight_mode_ = SETPOINT_MODE_SOAR;
 
+  bool is_in_thermal = thermal_estimator_.IsInThermal();
+
   //Run Thermal estimator when in a thermal
-  thermal_estimator_.UpdateState(mavPos_, mavVel_, wind_velocity_);
+  thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_);
 
   target_position_ = thermal_estimator_.getThermalPosition();
   //TODO: Limit Target poisition to geofence
@@ -125,7 +127,7 @@ void ThermalSoaring::runThermalSoar() {
     std::cout << "State Transition to: STATE_FREE_SOAR from: STATE_THERMAL_SOAR" << std::endl;
     controller_state_ = CONTROLLER_STATE::STATE_FREE_SOAR;
     return;
-  } else if (!thermal_estimator_.IsInThermal()) {
+  } else if (!is_in_thermal) {
     std::cout << "State Transition to: STATE_FREE_SOAR from: STATE_THERMAL_SOAR" << std::endl;
     controller_state_ = CONTROLLER_STATE::STATE_FREE_SOAR;
     return;
