@@ -14,13 +14,9 @@ ThermalEstimator::ThermalEstimator(const ros::NodeHandle& nh, const ros::NodeHan
   mass_ = 1.5;
   A_wing_ = 0.3;
 
-  // Parameters from ardusoar
-  // SOAR_POLAR_B,0.037
-  // SOAR_POLAR_CD0,0.067
-  // SOAR_POLAR_K,73.01
   K_ = 2 * mass_ * g_ / (rho_ * A_wing_); //SOAR_POLAR_K
-  C_D0_ = 0.1; //SOAR_POLAR_C_D0 0 - 0.5
-  B_ = 0.09;  //SOAR_POLAR_B 0 - 0.5
+  C_D0_ = 0.067; //SOAR_POLAR_C_D0 0 - 0.5
+  B_ = 0.037;  //SOAR_POLAR_B 0 - 0.5
   F_ = Eigen::Matrix4d::Identity();   //Process Dynamics
 
   //TODO: Read noise configurations from parameters
@@ -98,7 +94,7 @@ double ThermalEstimator::getDragPolarCurve(double airspeed, double bank_angle){
 
   // std::cout << "CL: " << C_L << std::endl;
   // std::cout << "vz: " << v_z << std::endl;
-  // std::cout << "velocity_z: " << velocity_(2) << std::endl;
+  // std::cout << "velocity_z: " << prev_velocity_(2) << std::endl;
   return v_z;
 }
 
