@@ -38,17 +38,18 @@ class ThermalEstimator
 
     //Estimator States
     bool vehicle_in_thermal_;
+    // thermal state vector is defined as below
+    // W_th : Thermal Strength
+    // R_th : Thermal Radius
+    // x    : Thermal Center x
+    // y    : Thermal Cetner y
     Eigen::Vector4d thermal_state_;
     Eigen::Matrix4d thermal_state_covariance_;
 
     //Vehicle State
+    Eigen::Vector3d prev_position_;
     Eigen::Vector3d prev_velocity_;
-    Eigen::Vector3d thermal_center_;
-    Eigen::Vector3d wind_velocity_;
 
-    Eigen::Vector4d Q_vector_;
-    Eigen::Vector4d K_kalman_;
-    Eigen::Vector4d H_;
     Eigen::Matrix4d F_;
     Eigen::Matrix4d Q_;
 
@@ -57,7 +58,6 @@ class ThermalEstimator
     double getSpecificEnergyRate(Eigen::Vector3d velocity, Eigen::Vector3d prev_velocity);
     double ObservationFunction(Eigen::Vector4d state);
     Eigen::Vector4d ObservationProcess(Eigen::Vector4d state);
-    Eigen::Vector4d computeKalmanGains(Eigen::Vector4d state);
 
 
   public:
