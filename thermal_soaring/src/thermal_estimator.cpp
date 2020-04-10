@@ -14,16 +14,20 @@ ThermalEstimator::ThermalEstimator(const ros::NodeHandle& nh, const ros::NodeHan
   mass_ = 1.5;
   A_wing_ = 0.3;
 
+  // Parameters from ardusoar
+  // SOAR_POLAR_B,0.037
+  // SOAR_POLAR_CD0,0.067
+  // SOAR_POLAR_K,73.01
   K_ = 2 * mass_ * g_ / (rho_ * A_wing_); //SOAR_POLAR_K
   C_D0_ = 0.1; //SOAR_POLAR_C_D0 0 - 0.5
   B_ = 0.09;  //SOAR_POLAR_B 0 - 0.5
-
   F_ = Eigen::Matrix4d::Identity();   //Process Dynamics
 
   //TODO: Read noise configurations from parameters
   R_ = 0.01;
-  Q_vector_ << 1.0, 1.0, 1.0, 1.0;
-  Q_ = Q_vector_.asDiagonal();
+  Eigen::Vector4d Q_vector;
+  Q_vector << 1.0, 1.0, 1.0, 1.0;
+  Q_ = Q_vector.asDiagonal();
 
 }
 
@@ -33,34 +37,33 @@ ThermalEstimator::~ThermalEstimator() {
 
 void ThermalEstimator::UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity, Eigen::Vector4d attitude, Eigen::Vector3d wind_velocity){
   //Update States
-  position_ = position;
-  prev_velocity_ = velocity_;
-  velocity_ = velocity;
-  vehicle_attitude_ = attitude;
-  wind_velocity_ = wind_velocity;
+  Eigen::Vector3d current_position = position;
+  Eigen::Vector3d current_velocity = velocity;
 
   //Detect Thermal
-  double netto_signal = getNettoVariometer();
-  vehicle_in_thermal_ = bool(netto_signal > soaring_threshold_);
+  double netto_rate = getNettoVariometer(current_velocity);
+  vehicle_in_thermal_ = bool(netto_rate > soaring_threshold_);
 
-  //Estimate 
+  //Estimate Thermal states
+  ///State transition
+  Eigen::Vector4d thermal_state_hat = thermal_state_;
+  Eigen::Matrix4d thermal_state_covariance_hat = thermal_state_covariance_ + Q_;
+
   ///Compute Kalman gains
-  Eigen::Vector4d H_ = ObservationProcess(thermal_state_);
-  double den = H_.transpose() * thermal_state_covariance_ * H_ + R_;
-  K_kalman_ = thermal_state_covariance_ * H_ / den;
+  Eigen::Vector4d H = ObservationProcess(thermal_state_);
+  double den = H.transpose() * thermal_state_covariance_hat * H + R_;
+  Eigen::Vector4d K_kalman_ = thermal_state_covariance_hat * H / den;
 
-  ///Update states
-  double measurement;
-  ///TODO: Get correct measurements
+  //Update
+  thermal_state_ = thermal_state_hat + K_kalman_ * (netto_rate - ObservationFunction(thermal_state_));
+  thermal_state_covariance_ = (Eigen::Matrix4d::Identity() - K_kalman_ * H.transpose())*thermal_state_covariance_ + Q_;
 
-  thermal_state_ = thermal_state_ + K_kalman_ * (measurement - ObservationFunction(thermal_state_));
-
-  ///Covariance update
-  thermal_state_covariance_ = thermal_state_covariance_ + Q_;
+  prev_position_ = current_position;
+  prev_velocity_ = current_velocity;
 }
 
 void ThermalEstimator::reset() {
-  thermal_center_ = Eigen::Vector3d::Zero();
+  thermal_state_ = Eigen::Vector4d::Zero();
 
 
 }
@@ -69,14 +72,14 @@ bool ThermalEstimator::IsInThermal(){
   return vehicle_in_thermal_;
 }
 
-double ThermalEstimator::getNettoVariometer(){
+double ThermalEstimator::getNettoVariometer(Eigen::Vector3d velocity){
   double netto_variometer, vz, e_dot;
   double phi = 0.0;
 
   //TODO: Subscribe to bank angles
   //TODO: Get airspeed properly
-  vz = getDragPolarCurve(velocity_.norm(), phi);
-  e_dot = getSpecificEnergyRate();
+  vz = getDragPolarCurve(velocity.norm(), phi);
+  e_dot = getSpecificEnergyRate(velocity, prev_velocity_);
   netto_variometer = e_dot + vz;
 
   // std::cout << "e_dot: "<< e_dot  << std::endl;
@@ -99,34 +102,21 @@ double ThermalEstimator::getDragPolarCurve(double airspeed, double bank_angle){
   return v_z;
 }
 
-double ThermalEstimator::getSpecificEnergyRate(){
+double ThermalEstimator::getSpecificEnergyRate(Eigen::Vector3d velocity, Eigen::Vector3d prev_velocity){
   double e_dot, v_dot, h_dot;
   double dt = 1.0;
 
-  v_dot = (velocity_.norm() - prev_velocity_.norm()) / dt;
-  h_dot = velocity_(2);
-  e_dot = h_dot + velocity_.norm() * v_dot / g_;
+  v_dot = (velocity.norm() - prev_velocity_.norm()) / dt;
+  h_dot = velocity(2);
+  e_dot = h_dot + velocity.norm() * v_dot / g_;
 
   return e_dot;
 }
 
 Eigen::Vector3d ThermalEstimator::getThermalPosition(){
-  return thermal_center_;
-}
-
-Eigen::Vector4d ThermalEstimator::computeKalmanGains(Eigen::Vector4d state) {
-  Eigen::Vector4d H;
-  const double W_th = state(0);
-  const double R_th = state(1);
-  const double x = state(2);
-  const double y = state(3);
-
-  H_(0) = std::exp(- (x*x + y*y)/(R_th*R_th));
-  H_(1) = 2 * W_th * (x*x + y*y) * H_(0) / (std::pow(R_th, 3));
-  H_(2) = 2 * W_th * x * H_(0) / (std::pow(R_th, 2));
-  H_(3) = 2 * W_th * y * H_(0) / (std::pow(R_th, 2));
-  
-  return H;
+  Eigen::Vector3d thermal_center;
+  thermal_center << thermal_state_(2), thermal_state_(3), 0.0;
+  return thermal_center;
 }
 
 Eigen::Vector4d ThermalEstimator::ObservationProcess(Eigen::Vector4d state){
@@ -136,10 +126,10 @@ Eigen::Vector4d ThermalEstimator::ObservationProcess(Eigen::Vector4d state){
   const double x = state(2);
   const double y = state(3);
 
-  H_(0) = std::exp(- (x*x + y*y)/(R_th*R_th));
-  H_(1) = 2 * W_th * (x*x + y*y) * H_(0) / (std::pow(R_th, 3));
-  H_(2) = 2 * W_th * x * H_(0) / (std::pow(R_th, 2));
-  H_(3) = 2 * W_th * y * H_(0) / (std::pow(R_th, 2));
+  H(0) = std::exp(- (x*x + y*y)/(R_th*R_th));
+  H(1) = 2 * W_th * (x*x + y*y) * H(0) / (std::pow(R_th, 3));
+  H(2) = 2 * W_th * x * H(0) / (std::pow(R_th, 2));
+  H(3) = 2 * W_th * y * H(0) / (std::pow(R_th, 2));
   
   return H;
 }
