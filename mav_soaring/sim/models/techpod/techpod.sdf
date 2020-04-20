@@ -1,0 +1,527 @@
+<sdf version='1.6'>
+  <model name='techpod'>
+    <link name='techpod/base_link'>
+      <pose frame=''>0 0 0 0 -0 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>2.05</mass>
+        <inertia>
+          <ixx>0.16632</ixx>
+          <ixy>0</ixy>
+          <ixz>0.0755</ixz>
+          <iyy>0.3899</iyy>
+          <iyz>0</iyz>
+          <izz>0.5243</izz>
+        </inertia>
+      </inertial>
+      <collision name='techpod/base_link_inertia_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>1.088 2.591 0.303</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='techpod/base_link_inertia_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_body.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGray</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <link name='techpod/aileron_left'>
+      <pose frame=''>0.1095 0.99245 0.115 0 -0 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.00101642</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>2.48167e-05</iyy>
+          <iyz>0</iyz>
+          <izz>0.00103842</izz>
+        </inertia>
+      </inertial>
+      <collision name='techpod/aileron_left_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_aileron_left.dae</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='techpod/aileron_left_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_aileron_left.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <joint name='techpod/aileron_left_joint' type='revolute'>
+      <child>techpod/aileron_left</child>
+      <parent>techpod/base_link</parent>
+      <axis>
+        <xyz>0 -1 0</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+          <effort>0</effort>
+          <velocity>0</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <link name='techpod/aileron_right'>
+      <pose frame=''>0.1095 -0.99245 0.115 0 -0 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.00101642</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>2.48167e-05</iyy>
+          <iyz>0</iyz>
+          <izz>0.00103842</izz>
+        </inertia>
+      </inertial>
+      <collision name='techpod/aileron_right_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_aileron_right.dae</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='techpod/aileron_right_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_aileron_right.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <joint name='techpod/aileron_right_joint' type='revolute'>
+      <child>techpod/aileron_right</child>
+      <parent>techpod/base_link</parent>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+          <effort>0</effort>
+          <velocity>0</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <link name='techpod/elevator'>
+      <pose frame=''>-0.555 0 0.26 0 -0 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.00174161</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>2.2875e-05</iyy>
+          <iyz>0</iyz>
+          <izz>0.00176208</izz>
+        </inertia>
+      </inertial>
+      <collision name='techpod/elevator_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_elevator.dae</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='techpod/elevator_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_elevator.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <joint name='techpod/elevator_joint' type='revolute'>
+      <child>techpod/elevator</child>
+      <parent>techpod/base_link</parent>
+      <axis>
+        <xyz>0 -1 0</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+          <effort>0</effort>
+          <velocity>0</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <link name='techpod/flap_left'>
+      <pose frame=''>0.101 0.382 0.1185 0 -0 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.00175781</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>5.02666e-05</iyy>
+          <iyz>0</iyz>
+          <izz>0.00180381</izz>
+        </inertia>
+      </inertial>
+      <collision name='techpod/flap_left_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_flap_left.dae</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='techpod/flap_left_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_flap_left.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <joint name='techpod/flap_left_joint' type='revolute'>
+      <child>techpod/flap_left</child>
+      <parent>techpod/base_link</parent>
+      <axis>
+        <xyz>0 -1 0</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+          <effort>0</effort>
+          <velocity>0</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <link name='techpod/flap_right'>
+      <pose frame=''>0.101 -0.382 0.1185 0 -0 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.00175781</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>5.02666e-05</iyy>
+          <iyz>0</iyz>
+          <izz>0.00180381</izz>
+        </inertia>
+      </inertial>
+      <collision name='techpod/flap_right_collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_flap_right.dae</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='techpod/flap_right_visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_flap_right.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <joint name='techpod/flap_right_joint' type='revolute'>
+      <child>techpod/flap_right</child>
+      <parent>techpod/base_link</parent>
+      <axis>
+        <xyz>0 1 0</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+          <effort>0</effort>
+          <velocity>0</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <link name='techpod/propeller_'>
+      <pose frame=''>-0.025 0 0.15 3.14159 -1.57079 3.14159</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.00250075</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.00250075</iyy>
+          <iyz>0</iyz>
+          <izz>0.005</izz>
+        </inertia>
+      </inertial>
+      <collision name='techpod/propeller__collision'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.1 0.1 0.1</scale>
+            <uri>model://techpod/meshes/propeller_cw.dae</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='techpod/propeller__visual'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1.0 1.0 1.0</scale>
+            <uri>model://techpod/meshes/propeller_cw.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <joint name='techpod/propeller_{suffix}_joint' type='revolute'>
+      <child>techpod/propeller_</child>
+      <parent>techpod/base_link</parent>
+      <axis>
+        <xyz>-1 0 0</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <link name='techpod/rudder'>
+      <pose frame=''>-0.428 0 0 0 -0.25 0</pose>
+      <inertial>
+        <pose frame=''>0 0 0 0 0.25 0</pose>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.000486708</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.000622683</iyy>
+          <iyz>0</iyz>
+          <izz>0.000141375</izz>
+        </inertia>
+      </inertial>
+      <collision name='techpod/rudder_collision'>
+        <pose frame=''>0 0 0 0 0.25 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_rudder.dae</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='techpod/rudder_visual'>
+        <pose frame=''>0 0 0 0 0.25 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://techpod/meshes/techpod_rudder.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <joint name='techpod/rudder_joint' type='revolute'>
+      <child>techpod/rudder</child>
+      <parent>techpod/base_link</parent>
+      <axis>
+        <xyz>-0.247404 0 0.968912</xyz>
+        <limit>
+          <lower>0</lower>
+          <upper>0</upper>
+          <effort>0</effort>
+          <velocity>0</velocity>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <static>0</static>
+    <!-- <plugin name='fw_dynamics_plugin' filename='librotors_gazebo_fw_dynamics_plugin.so'>
+      <robotNamespace>techpod</robotNamespace>
+      <linkName>techpod/base_link</linkName>
+      <aeroParamsYAML>hello.yml</aeroParamsYAML>
+      <vehicleParamsYAML>hello.yml</vehicleParamsYAML>
+      <isInputJoystick>yes</isInputJoystick>
+    </plugin> -->
+  </model>
+</sdf>
