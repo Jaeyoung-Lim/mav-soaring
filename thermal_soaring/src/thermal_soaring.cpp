@@ -102,7 +102,6 @@ void ThermalSoaring::runReachAltitude() {
   if ( mavPos_(2) >= SOAR_ALT_CUTOFF ) {
     std::cout << "State Transition to: STATE_FREE_SOAR from: STATE_REACH_ALTITUDE" << std::endl;
     controller_state_ = CONTROLLER_STATE::STATE_FREE_SOAR;
-    thermal_estimator_.reset();
     //TODO: Reinitialize thermal estimator
     return;
   } else {

@@ -25,6 +25,8 @@ ThermalEstimator::ThermalEstimator(const ros::NodeHandle& nh, const ros::NodeHan
   Q_vector << 1.0, 1.0, 1.0, 1.0;
   Q_ = Q_vector.asDiagonal();
 
+  thermal_state_ << 100.0, 10.0, 0.0, 0.0;
+
   status_pub_ = nh_.advertise<soaring_msgs::ThermalEstimatorStatus>("/soaring/thermal_estimator/status", 1);
 }
 
