@@ -15,6 +15,8 @@
 #include <Eigen/Dense>
 #include <math.h>
 
+#include "soaring_msgs/ThermalEstimatorStatus.h"
+
 using namespace std;
 using namespace Eigen;
 
@@ -23,6 +25,8 @@ class ThermalEstimator
   private:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_private_;
+
+    ros::Publisher  status_pub_;
   
     //Parameters
     double K_;
@@ -58,6 +62,7 @@ class ThermalEstimator
     double getSpecificEnergyRate(Eigen::Vector3d velocity, Eigen::Vector3d prev_velocity);
     double ObservationFunction(Eigen::Vector4d state);
     Eigen::Vector4d ObservationProcess(Eigen::Vector4d state);
+    void PublishEstimatorStatus(Eigen::Vector4d state);
 
 
   public:

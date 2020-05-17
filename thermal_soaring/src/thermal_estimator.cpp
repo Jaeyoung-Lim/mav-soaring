@@ -25,6 +25,7 @@ ThermalEstimator::ThermalEstimator(const ros::NodeHandle& nh, const ros::NodeHan
   Q_vector << 1.0, 1.0, 1.0, 1.0;
   Q_ = Q_vector.asDiagonal();
 
+  status_pub_ = nh_.advertise<soaring_msgs::ThermalEstimatorStatus>("/soaring/thermal_estimator/status", 1);
 }
 
 ThermalEstimator::~ThermalEstimator() {
@@ -56,6 +57,8 @@ void ThermalEstimator::UpdateState(Eigen::Vector3d position, Eigen::Vector3d vel
 
   prev_position_ = current_position;
   prev_velocity_ = current_velocity;
+
+  PublishEstimatorStatus(thermal_state_);
 }
 
 void ThermalEstimator::reset() {
@@ -137,4 +140,15 @@ double ThermalEstimator::ObservationFunction(Eigen::Vector4d state){
   const double y = state(3);
 
   return W_th * std::exp( - (x*x + y*y)/(R_th*R_th));
+}
+
+void ThermalEstimator::PublishEstimatorStatus(Eigen::Vector4d state) {
+  soaring_msgs::ThermalEstimatorStatus msg;
+
+  msg.header.stamp = ros::Time::now();
+  msg.position.x = state(2);
+  msg.position.y = state(3);
+  msg.radius = state(1);
+  msg.strength = state(0);
+  status_pub_.publish(msg);
 }
