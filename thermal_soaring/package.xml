@@ -19,7 +19,8 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>mavros_msgs</build_depend>
-  <build_depend> eigen_catkin</build_depend>
+  <build_depend>eigen_catkin</build_depend>
+  <build_depend>soaring_msgs</build_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
@@ -30,6 +31,7 @@
   <run_depend>tf</run_depend>
   <run_depend>mavros</run_depend>
   <run_depend>mavros_msgs</run_depend>
+  <run_depend>soaring_msgs</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
