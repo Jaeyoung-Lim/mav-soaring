@@ -11,7 +11,8 @@
   <arg name="fcu_protocol" default="v2.0" />
   <arg name="respawn_mavros" default="false" />
   <arg name="vehicle" default="plane"/>
-  <arg name="model" default="techpod"/>
+  <arg name="model" default="plane"/>
+  <arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/empty.world"/>
   
   <node name="thermal" pkg="thermal_soaring" type="thermal_soaring_node" output="screen" />
 
@@ -36,6 +37,7 @@
     <!-- Launch Gazebo -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="gui" value="$(arg gui)"/>
+        <arg name="world_name" value="$(arg world)"/>
     </include>
 
     <!-- Spawn vehicle model -->
