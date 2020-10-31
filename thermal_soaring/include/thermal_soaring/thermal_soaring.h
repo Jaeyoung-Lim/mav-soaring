@@ -18,7 +18,9 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
-#include <thermal_soaring/thermal_estimator.h>
+
+#include "thermal_soaring/thermal_estimator.h"
+#include "thermal_soaring/thermal_detector.h"
 
 using namespace std;
 using namespace Eigen;
@@ -74,6 +76,7 @@ class ThermalSoaring
     Eigen::Vector3d wind_velocity_;
 
     ThermalEstimator thermal_estimator_;
+    ThermalDetector thermal_detector_;
 
     void cmdloopCallback(const ros::TimerEvent& event);
     void statusloopCallback(const ros::TimerEvent& event);

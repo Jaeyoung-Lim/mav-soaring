@@ -6,7 +6,7 @@ include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_
 find_package(catkin_simple REQUIRED)
 catkin_simple(ALL_DEPS_REQUIRED)
 
-add_definitions(-std=c++11)
+add_definitions(-std=c++14)
 
 #############
 # LIBRARIES #
@@ -14,6 +14,7 @@ add_definitions(-std=c++11)
 cs_add_library(${PROJECT_NAME}
   src/thermal_soaring.cpp
   src/thermal_estimator.cpp
+  src/thermal_detector.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
@@ -38,6 +39,7 @@ if(CATKIN_ENABLE_TESTING)
     # Add gtest based cpp test target and link libraries
     catkin_add_gtest(${PROJECT_NAME}-test test/main.cpp
                                           test/test_example.cpp
+                                          test/thermal_detector-test.cpp
     )
     if(TARGET ${PROJECT_NAME}-test)
         target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME}

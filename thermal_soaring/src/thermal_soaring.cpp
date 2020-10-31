@@ -8,7 +8,8 @@ using namespace std;
 ThermalSoaring::ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  thermal_estimator_(nh, nh_private) {
+  thermal_estimator_(nh, nh_private),
+  thermal_detector_() {
 
   cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &ThermalSoaring::cmdloopCallback, this); // Define timer for constant loop rate
   statusloop_timer_ = nh_.createTimer(ros::Duration(1), &ThermalSoaring::statusloopCallback, this); // Define timer for constant loop rate
@@ -57,9 +58,12 @@ void ThermalSoaring::statusloopCallback(const ros::TimerEvent& event){
 void ThermalSoaring::runFreeSoar() {
   flight_mode_ = SETPOINT_MODE_SOAR;
 
+  thermal_detector_.UpdateState(mavVel_, mavAtt_);
+  bool found_thermal = thermal_detector_.IsInThermal();
+
   thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_);
 
-  bool found_thermal = thermal_estimator_.IsInThermal();
+
 
   //TODO: Check if thermal is reachable
 
@@ -114,7 +118,7 @@ void ThermalSoaring::runThermalSoar() {
   // If altitude is too high, exit thermal
   flight_mode_ = SETPOINT_MODE_SOAR;
 
-  bool is_in_thermal = thermal_estimator_.IsInThermal();
+  bool is_in_thermal = thermal_detector_.IsInThermal();
 
   //Run Thermal estimator when in a thermal
   thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_);
