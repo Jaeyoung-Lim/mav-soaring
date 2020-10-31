@@ -152,31 +152,3 @@ void ThermalSoaring::PubPositionSetpointRaw(){
   setpointraw_pub_.publish(msg);
 
 }
-
-void ThermalSoaring::mavposeCallback(const geometry_msgs::PoseStamped& msg){
-  mavPos_(0) = msg.pose.position.x;
-  mavPos_(1) = msg.pose.position.y;
-  mavPos_(2) = msg.pose.position.z;
-  mavAtt_(0) = msg.pose.orientation.w;
-  mavAtt_(1) = msg.pose.orientation.x;
-  mavAtt_(2) = msg.pose.orientation.y;
-  mavAtt_(3) = msg.pose.orientation.z;
-
-}
-
-void ThermalSoaring::mavtwistCallback(const geometry_msgs::TwistStamped& msg){ 
-  mavVel_(0) = msg.twist.linear.x;
-  mavVel_(1) = msg.twist.linear.y;
-  mavVel_(2) = msg.twist.linear.z;
-  mavRate_(0) = msg.twist.angular.x;
-  mavRate_(1) = msg.twist.angular.y;
-  mavRate_(2) = msg.twist.angular.z;
-  
-}
-
-void ThermalSoaring::windestimationCallback(const geometry_msgs::TwistWithCovarianceStamped& msg){
-  wind_velocity_(0) = msg.twist.twist.linear.x;
-  wind_velocity_(1) = msg.twist.twist.linear.y;
-  wind_velocity_(2) = msg.twist.twist.linear.z;
-
-}
