@@ -22,10 +22,14 @@
 #include "thermal_soaring/thermal_estimator.h"
 #include "thermal_soaring/thermal_detector.h"
 
+#include "soaring_msgs/ThermalEstimatorStatus.h"
+#include <mavros_msgs/PositionTarget.h>
+
+
 using namespace std;
 using namespace Eigen;
 
-uint16_t SETPOINT_MODE_SOAR = 0x8000;
+uint16_t SETPOINT_MODE_SOAR = mavros_msgs::PositionTarget::IGNORE_PZ | mavros_msgs::PositionTarget::IGNORE_VZ | mavros_msgs::PositionTarget::IGNORE_AFZ;
 uint16_t SETPOINT_MODE_CRUISE = 0x3000;
 double SOAR_ALT_CUTOFF = 70.0;
 double SOAR_ALT_MAX = 100.0;
@@ -56,6 +60,7 @@ class ThermalSoaring
     ros::NodeHandle nh_private_;
 
     ros::Publisher setpointraw_pub_;
+    ros::Publisher status_pub_;
     ros::Subscriber mavpose_sub_;
     ros::Subscriber mavtwist_sub_;
     ros::Subscriber windest_sub_;
@@ -84,6 +89,7 @@ class ThermalSoaring
     void runReachAltitude();
     void runThermalSoar();
     void PubPositionSetpointRaw();
+    void PublishEstimatorStatus();
     void mavposeCallback(const geometry_msgs::PoseStamped& msg) {
       mavPos_(0) = msg.pose.position.x;
       mavPos_(1) = msg.pose.position.y;

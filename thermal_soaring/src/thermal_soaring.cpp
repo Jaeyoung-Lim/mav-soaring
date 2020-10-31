@@ -8,7 +8,7 @@ using namespace std;
 ThermalSoaring::ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
   nh_(nh),
   nh_private_(nh_private),
-  thermal_estimator_(nh, nh_private),
+  thermal_estimator_(),
   thermal_detector_() {
 
   cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &ThermalSoaring::cmdloopCallback, this); // Define timer for constant loop rate
@@ -19,7 +19,7 @@ ThermalSoaring::ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle&
   windest_sub_ = nh_.subscribe("/mavros/windestimation", 1, &ThermalSoaring::windestimationCallback, this, ros::TransportHints().tcpNoDelay());
 
   setpointraw_pub_ = nh_.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 1);
-
+  status_pub_ = nh_.advertise<soaring_msgs::ThermalEstimatorStatus>("/soaring/thermal_estimator/status", 1);
 }
 ThermalSoaring::~ThermalSoaring() {
   //Destructor
@@ -52,6 +52,7 @@ void ThermalSoaring::statusloopCallback(const ros::TimerEvent& event){
       break;
   }
 
+  PublishEstimatorStatus();
   //TODO: Visualize thermal
 }
 
@@ -60,10 +61,9 @@ void ThermalSoaring::runFreeSoar() {
 
   thermal_detector_.UpdateState(mavVel_, mavAtt_);
   bool found_thermal = thermal_detector_.IsInThermal();
-
-  thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_);
-
-
+  double netto_vario = thermal_detector_.getNettoVariometer();
+  
+  thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_, netto_vario);
 
   //TODO: Check if thermal is reachable
 
@@ -119,9 +119,10 @@ void ThermalSoaring::runThermalSoar() {
   flight_mode_ = SETPOINT_MODE_SOAR;
 
   bool is_in_thermal = thermal_detector_.IsInThermal();
+  double netto_vario = thermal_detector_.getNettoVariometer();
 
   //Run Thermal estimator when in a thermal
-  thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_);
+  thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_, netto_vario);
 
   target_position_ = thermal_estimator_.getThermalPosition();
   //TODO: Limit Target poisition to geofence
@@ -151,4 +152,17 @@ void ThermalSoaring::PubPositionSetpointRaw(){
   msg.position.z = target_position_(2);
   setpointraw_pub_.publish(msg);
 
+}
+
+void ThermalSoaring::PublishEstimatorStatus() {
+  soaring_msgs::ThermalEstimatorStatus msg;
+
+  msg.header.stamp = ros::Time::now();
+  msg.netto_variometer = thermal_detector_.getNettoVariometer();
+  Eigen::Vector4d thermal_state = thermal_estimator_.getThermalState();
+  msg.position.x = thermal_state[2];
+  msg.position.y = thermal_state[3];
+  msg.radius = thermal_state[1];
+  msg.strength = thermal_state[0];
+  status_pub_.publish(msg);
 }

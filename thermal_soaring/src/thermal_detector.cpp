@@ -3,8 +3,8 @@
 ThermalDetector::ThermalDetector() {
   //Vehicle Specific Parameters
   mass_ = 1.5;
-  A_wing_ = 0.3;
-  C_D0_ = 0.067; //SOAR_POLAR_C_D0 0 - 0.5
+  A_wing_ = 1.2;
+  C_D0_ = 0.0067; //SOAR_POLAR_C_D0 0 - 0.5
   C_L_MAX_ = 5.0;
   B_ = 0.037;  //SOAR_POLAR_B 0 - 0.5
 
@@ -27,7 +27,7 @@ void ThermalDetector::UpdateState(const Eigen::Vector3d &velocity, const Eigen::
   double vz = getDragPolarCurve(velocity.norm(), bank_angle);
   double e_dot = getSpecificEnergyRate(velocity, prev_velocity_, dt);
   netto_variometer_ = e_dot + vz;
-  
+
   prev_velocity_ = velocity;
 }
 

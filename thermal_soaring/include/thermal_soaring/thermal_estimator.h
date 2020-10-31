@@ -3,10 +3,6 @@
 #ifndef THERMAL_ESTIMATOR_H
 #define THERMAL_ESTIMATOR_H
 
-#include <ros/ros.h>
-#include <ros/subscribe_options.h>
-#include <tf/transform_broadcaster.h>
-
 #include <stdio.h>
 #include <cstdlib>
 #include <string>
@@ -15,19 +11,12 @@
 #include <Eigen/Dense>
 #include <math.h>
 
-#include "soaring_msgs/ThermalEstimatorStatus.h"
-
 using namespace std;
 using namespace Eigen;
 
 class ThermalEstimator
 {
   private:
-    ros::NodeHandle nh_;
-    ros::NodeHandle nh_private_;
-
-    ros::Publisher  status_pub_;
-  
     //Parameters
     double R_;
 
@@ -39,24 +28,21 @@ class ThermalEstimator
     Eigen::Vector4d thermal_state_;
     Eigen::Matrix4d thermal_state_covariance_;
 
-    //Vehicle State
-    Eigen::Vector3d prev_position_;
-    Eigen::Vector3d prev_velocity_;
-
     Eigen::Matrix4d F_;
     Eigen::Matrix4d Q_;
 
-    double ObservationFunction(Eigen::Vector4d state);
-    Eigen::Vector4d ObservationProcess(Eigen::Vector4d state);
-    void PublishEstimatorStatus(Eigen::Vector4d state);
-
+  protected:
+    void ObservationProcess(Eigen::Vector4d state, Eigen::Vector4d &H, double &predicted_measurement);
+    void PriorUpdate(const Eigen::Vector4d &state, const Eigen::Matrix4d &covariance, Eigen::Vector4d &predicted_state, Eigen::Matrix4d &predicted_covariance);
+    void MeasurementUpdate(const Eigen::Vector4d &state, const Eigen::Matrix4d &covariance, Eigen::Vector4d &updated_state, Eigen::Matrix4d &updated_covariance, double measurement);
 
   public:
-    ThermalEstimator(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+    ThermalEstimator();
     virtual ~ ThermalEstimator();
-    void UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity, Eigen::Vector4d attitude, Eigen::Vector3d wind_velocity);
+    void UpdateState(Eigen::Vector3d position, Eigen::Vector3d velocity, Eigen::Vector4d attitude, Eigen::Vector3d wind_velocity, double netto_vario);
     void reset();
     Eigen::Vector3d getThermalPosition();
+    Eigen::Vector4d getThermalState() { return thermal_state_; };
 };
 
 

@@ -40,6 +40,7 @@ if(CATKIN_ENABLE_TESTING)
     catkin_add_gtest(${PROJECT_NAME}-test test/main.cpp
                                           test/test_example.cpp
                                           test/thermal_detector-test.cpp
+                                          test/thermal_estimator-test.cpp
     )
     if(TARGET ${PROJECT_NAME}-test)
         target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME}
