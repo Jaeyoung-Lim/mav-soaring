@@ -4,56 +4,52 @@
 
 using namespace Eigen;
 using namespace std;
-//Constructor
-ThermalSoaring::ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private):
-  nh_(nh),
-  nh_private_(nh_private),
-  thermal_estimator_(),
-  thermal_detector_() {
+// Constructor
+ThermalSoaring::ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private)
+    : nh_(nh), nh_private_(nh_private), thermal_estimator_(), thermal_detector_() {
+  cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &ThermalSoaring::cmdloopCallback,
+                                   this);  // Define timer for constant loop rate
+  statusloop_timer_ = nh_.createTimer(ros::Duration(1), &ThermalSoaring::statusloopCallback,
+                                      this);  // Define timer for constant loop rate
 
-  cmdloop_timer_ = nh_.createTimer(ros::Duration(0.01), &ThermalSoaring::cmdloopCallback, this); // Define timer for constant loop rate
-  statusloop_timer_ = nh_.createTimer(ros::Duration(1), &ThermalSoaring::statusloopCallback, this); // Define timer for constant loop rate
-
-  mavpose_sub_ = nh_.subscribe("/mavros/local_position/pose", 1, &ThermalSoaring::mavposeCallback, this,ros::TransportHints().tcpNoDelay());
-  mavtwist_sub_ = nh_.subscribe("/mavros/local_position/velocity_local", 1, &ThermalSoaring::mavtwistCallback, this,ros::TransportHints().tcpNoDelay());
-  windest_sub_ = nh_.subscribe("/mavros/windestimation", 1, &ThermalSoaring::windestimationCallback, this, ros::TransportHints().tcpNoDelay());
+  mavpose_sub_ = nh_.subscribe("/mavros/local_position/pose", 1, &ThermalSoaring::mavposeCallback, this,
+                               ros::TransportHints().tcpNoDelay());
+  mavtwist_sub_ = nh_.subscribe("/mavros/local_position/velocity_local", 1, &ThermalSoaring::mavtwistCallback, this,
+                                ros::TransportHints().tcpNoDelay());
+  windest_sub_ = nh_.subscribe("/mavros/windestimation", 1, &ThermalSoaring::windestimationCallback, this,
+                               ros::TransportHints().tcpNoDelay());
 
   setpointraw_pub_ = nh_.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 1);
   status_pub_ = nh_.advertise<soaring_msgs::ThermalEstimatorStatus>("/soaring/thermal_estimator/status", 1);
 }
 ThermalSoaring::~ThermalSoaring() {
-  //Destructor
+  // Destructor
 }
 
-void ThermalSoaring::cmdloopCallback(const ros::TimerEvent& event){
-  
-  PubPositionSetpointRaw();
+void ThermalSoaring::cmdloopCallback(const ros::TimerEvent& event) { PubPositionSetpointRaw(); }
 
-}
-
-void ThermalSoaring::statusloopCallback(const ros::TimerEvent& event){
-
-  switch(controller_state_) {
-    case CONTROLLER_STATE::STATE_FREE_SOAR :
-      //Free soaring for either navigating to the next waypoint or looking for thermals
+void ThermalSoaring::statusloopCallback(const ros::TimerEvent& event) {
+  switch (controller_state_) {
+    case CONTROLLER_STATE::STATE_FREE_SOAR:
+      // Free soaring for either navigating to the next waypoint or looking for thermals
       runFreeSoar();
       break;
 
-    case CONTROLLER_STATE::STATE_REACH_ALTITUDE :
-      //Gaining altitude as it has reached minimum altitude
+    case CONTROLLER_STATE::STATE_REACH_ALTITUDE:
+      // Gaining altitude as it has reached minimum altitude
       runReachAltitude();
       break;
 
-    case CONTROLLER_STATE::STATE_THERMAL_SOAR :
+    case CONTROLLER_STATE::STATE_THERMAL_SOAR:
       runThermalSoar();
       break;
 
-    default :
+    default:
       break;
   }
 
   PublishEstimatorStatus();
-  //TODO: Visualize thermal
+  // TODO: Visualize thermal
 }
 
 void ThermalSoaring::runFreeSoar() {
@@ -62,23 +58,22 @@ void ThermalSoaring::runFreeSoar() {
   thermal_detector_.UpdateState(mavVel_, mavAtt_);
   bool found_thermal = thermal_detector_.IsInThermal();
   double netto_vario = thermal_detector_.getNettoVariometer();
-  
+
   thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_, netto_vario);
 
-  //TODO: Check if thermal is reachable
+  // TODO: Check if thermal is reachable
 
-  //TODO: Do reachability analysis //////////////////////////////////
-  //Evaluate waypoint to decide if it is reachable with glide slope
+  // TODO: Do reachability analysis //////////////////////////////////
+  // Evaluate waypoint to decide if it is reachable with glide slope
   // If the mission waypoint is unreachable, search for thermal
   // If mission point is reachable, move to mission point
 
-  //If not in thermal, keep track if the launch point is reachable. If not return to Home
-  //This should be optional, in case the vehicle is powered
+  // If not in thermal, keep track if the launch point is reachable. If not return to Home
+  // This should be optional, in case the vehicle is powered
 
-  bool engage_thermal_soaring = false;  
+  bool engage_thermal_soaring = false;
 
-
-  if ( mavPos_(2) < SOAR_ALT_MIN ) {
+  if (mavPos_(2) < SOAR_ALT_MIN) {
     std::cout << "State Transition to: STATE_REACH_ALTITUDE from: STATE_FREE_SOAR" << std::endl;
     controller_state_ = CONTROLLER_STATE::STATE_REACH_ALTITUDE;
 
@@ -98,15 +93,14 @@ void ThermalSoaring::runFreeSoar() {
 }
 
 void ThermalSoaring::runReachAltitude() {
-
   flight_mode_ = SETPOINT_MODE_CRUISE;
 
-  //TODO: This makes the vehicle launch upwards
+  // TODO: This makes the vehicle launch upwards
 
-  if ( mavPos_(2) >= SOAR_ALT_CUTOFF ) {
+  if (mavPos_(2) >= SOAR_ALT_CUTOFF) {
     std::cout << "State Transition to: STATE_FREE_SOAR from: STATE_REACH_ALTITUDE" << std::endl;
     controller_state_ = CONTROLLER_STATE::STATE_FREE_SOAR;
-    //TODO: Reinitialize thermal estimator
+    // TODO: Reinitialize thermal estimator
     return;
   } else {
     controller_state_ = CONTROLLER_STATE::STATE_REACH_ALTITUDE;
@@ -121,13 +115,13 @@ void ThermalSoaring::runThermalSoar() {
   bool is_in_thermal = thermal_detector_.IsInThermal();
   double netto_vario = thermal_detector_.getNettoVariometer();
 
-  //Run Thermal estimator when in a thermal
+  // Run Thermal estimator when in a thermal
   thermal_estimator_.UpdateState(mavPos_, mavVel_, mavAtt_, wind_velocity_, netto_vario);
 
   target_position_ = thermal_estimator_.getThermalPosition();
-  //TODO: Limit Target poisition to geofence
+  // TODO: Limit Target poisition to geofence
 
-  if ( mavPos_(2) >= SOAR_ALT_MAX) {
+  if (mavPos_(2) >= SOAR_ALT_MAX) {
     std::cout << "State Transition to: STATE_FREE_SOAR from: STATE_THERMAL_SOAR" << std::endl;
     controller_state_ = CONTROLLER_STATE::STATE_FREE_SOAR;
     return;
@@ -141,7 +135,7 @@ void ThermalSoaring::runThermalSoar() {
   }
 }
 
-void ThermalSoaring::PubPositionSetpointRaw(){
+void ThermalSoaring::PubPositionSetpointRaw() {
   mavros_msgs::PositionTarget msg;
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = "map";
@@ -151,7 +145,6 @@ void ThermalSoaring::PubPositionSetpointRaw(){
   msg.position.y = target_position_(1);
   msg.position.z = target_position_(2);
   setpointraw_pub_.publish(msg);
-
 }
 
 void ThermalSoaring::PublishEstimatorStatus() {

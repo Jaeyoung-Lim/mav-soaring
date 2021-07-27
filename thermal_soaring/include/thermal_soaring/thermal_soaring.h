@@ -9,27 +9,27 @@
 
 #include <stdio.h>
 #include <cstdlib>
-#include <string>
 #include <sstream>
+#include <string>
 
 #include <Eigen/Dense>
 
-#include <mavros_msgs/PositionTarget.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
-
-#include "thermal_soaring/thermal_estimator.h"
-#include "thermal_soaring/thermal_detector.h"
-
-#include "soaring_msgs/ThermalEstimatorStatus.h"
 #include <mavros_msgs/PositionTarget.h>
 
+#include "thermal_soaring/thermal_detector.h"
+#include "thermal_soaring/thermal_estimator.h"
+
+#include <mavros_msgs/PositionTarget.h>
+#include "soaring_msgs/ThermalEstimatorStatus.h"
 
 using namespace std;
 using namespace Eigen;
 
-uint16_t SETPOINT_MODE_SOAR = mavros_msgs::PositionTarget::IGNORE_PZ | mavros_msgs::PositionTarget::IGNORE_VZ | mavros_msgs::PositionTarget::IGNORE_AFZ;
+uint16_t SETPOINT_MODE_SOAR = mavros_msgs::PositionTarget::IGNORE_PZ | mavros_msgs::PositionTarget::IGNORE_VZ |
+                              mavros_msgs::PositionTarget::IGNORE_AFZ;
 uint16_t SETPOINT_MODE_CRUISE = 0x3000;
 double SOAR_ALT_CUTOFF = 70.0;
 double SOAR_ALT_MAX = 100.0;
@@ -53,69 +53,68 @@ enum class CONTROLLER_STATE {
   STATE_REACH_ALTITUDE,
 };
 
-class ThermalSoaring
-{
-  private:
-    ros::NodeHandle nh_;
-    ros::NodeHandle nh_private_;
+class ThermalSoaring {
+ private:
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_private_;
 
-    ros::Publisher setpointraw_pub_;
-    ros::Publisher status_pub_;
-    ros::Subscriber mavpose_sub_;
-    ros::Subscriber mavtwist_sub_;
-    ros::Subscriber windest_sub_;
+  ros::Publisher setpointraw_pub_;
+  ros::Publisher status_pub_;
+  ros::Subscriber mavpose_sub_;
+  ros::Subscriber mavtwist_sub_;
+  ros::Subscriber windest_sub_;
 
-    ros::Timer cmdloop_timer_, statusloop_timer_;
-  
-    bool is_in_thermal_;
+  ros::Timer cmdloop_timer_, statusloop_timer_;
 
-    uint16_t flight_mode_ = SETPOINT_MODE_SOAR;
+  bool is_in_thermal_;
 
-    CONTROLLER_STATE controller_state_ = CONTROLLER_STATE::STATE_FREE_SOAR;
+  uint16_t flight_mode_ = SETPOINT_MODE_SOAR;
 
-    Eigen::Vector3d mavPos_, mavVel;
-    Eigen::Vector3d mavVel_, mavRate_;
-    Eigen::Vector4d mavAtt_;
-    Eigen::Vector3d thermal_position_;
-    Eigen::Vector3d target_position_;
-    Eigen::Vector3d wind_velocity_;
+  CONTROLLER_STATE controller_state_ = CONTROLLER_STATE::STATE_FREE_SOAR;
 
-    ThermalEstimator thermal_estimator_;
-    ThermalDetector thermal_detector_;
+  Eigen::Vector3d mavPos_, mavVel;
+  Eigen::Vector3d mavVel_, mavRate_;
+  Eigen::Vector4d mavAtt_;
+  Eigen::Vector3d thermal_position_;
+  Eigen::Vector3d target_position_;
+  Eigen::Vector3d wind_velocity_;
 
-    void cmdloopCallback(const ros::TimerEvent& event);
-    void statusloopCallback(const ros::TimerEvent& event);
-    void runFreeSoar();
-    void runReachAltitude();
-    void runThermalSoar();
-    void PubPositionSetpointRaw();
-    void PublishEstimatorStatus();
-    void mavposeCallback(const geometry_msgs::PoseStamped& msg) {
-      mavPos_(0) = msg.pose.position.x;
-      mavPos_(1) = msg.pose.position.y;
-      mavPos_(2) = msg.pose.position.z;
-      mavAtt_(0) = msg.pose.orientation.w;
-      mavAtt_(1) = msg.pose.orientation.x;
-      mavAtt_(2) = msg.pose.orientation.y;
-      mavAtt_(3) = msg.pose.orientation.z;
-    };
-    void mavtwistCallback(const geometry_msgs::TwistStamped& msg) {
-      mavVel_(0) = msg.twist.linear.x;
-      mavVel_(1) = msg.twist.linear.y;
-      mavVel_(2) = msg.twist.linear.z;
-      mavRate_(0) = msg.twist.angular.x;
-      mavRate_(1) = msg.twist.angular.y;
-      mavRate_(2) = msg.twist.angular.z;
-    };
-    void windestimationCallback(const geometry_msgs::TwistWithCovarianceStamped& msg) {
-      wind_velocity_(0) = msg.twist.twist.linear.x;
-      wind_velocity_(1) = msg.twist.twist.linear.y;
-      wind_velocity_(2) = msg.twist.twist.linear.z;
-    };
-  public:
-    ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
-    virtual ~ ThermalSoaring();
+  ThermalEstimator thermal_estimator_;
+  ThermalDetector thermal_detector_;
+
+  void cmdloopCallback(const ros::TimerEvent& event);
+  void statusloopCallback(const ros::TimerEvent& event);
+  void runFreeSoar();
+  void runReachAltitude();
+  void runThermalSoar();
+  void PubPositionSetpointRaw();
+  void PublishEstimatorStatus();
+  void mavposeCallback(const geometry_msgs::PoseStamped& msg) {
+    mavPos_(0) = msg.pose.position.x;
+    mavPos_(1) = msg.pose.position.y;
+    mavPos_(2) = msg.pose.position.z;
+    mavAtt_(0) = msg.pose.orientation.w;
+    mavAtt_(1) = msg.pose.orientation.x;
+    mavAtt_(2) = msg.pose.orientation.y;
+    mavAtt_(3) = msg.pose.orientation.z;
+  };
+  void mavtwistCallback(const geometry_msgs::TwistStamped& msg) {
+    mavVel_(0) = msg.twist.linear.x;
+    mavVel_(1) = msg.twist.linear.y;
+    mavVel_(2) = msg.twist.linear.z;
+    mavRate_(0) = msg.twist.angular.x;
+    mavRate_(1) = msg.twist.angular.y;
+    mavRate_(2) = msg.twist.angular.z;
+  };
+  void windestimationCallback(const geometry_msgs::TwistWithCovarianceStamped& msg) {
+    wind_velocity_(0) = msg.twist.twist.linear.x;
+    wind_velocity_(1) = msg.twist.twist.linear.y;
+    wind_velocity_(2) = msg.twist.twist.linear.z;
+  };
+
+ public:
+  ThermalSoaring(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+  virtual ~ThermalSoaring();
 };
-
 
 #endif
