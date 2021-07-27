@@ -1,0 +1,47 @@
+<launch>
+  <arg name="gui" default="true"/>
+  <arg name="fcu_url" default="udp://:14540@127.0.0.1:14557"/>
+  <arg name="gcs_url" default="" />
+  <arg name="tgt_system" default="1" />
+  <arg name="tgt_component" default="1" />
+  <arg name="command_input" default="2" />
+  <arg name="gazebo_simulation" default="true" />
+  <arg name="visualization" default="true"/>
+  <arg name="log_output" default="screen" />
+  <arg name="fcu_protocol" default="v2.0" />
+  <arg name="respawn_mavros" default="false" />
+  <arg name="vehicle" default="plane"/>
+  <arg name="model" default="plane"/>
+  <arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/empty.world"/>
+  
+  <node name="thermal" pkg="thermal_soaring" type="thermal_soaring_node" output="screen" />
+
+  <include file="$(find mavros)/launch/node.launch">
+      <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+      <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+
+      <arg name="fcu_url" value="$(arg fcu_url)" />
+      <arg name="gcs_url" value="$(arg gcs_url)" />
+      <arg name="tgt_system" value="$(arg tgt_system)" />
+      <arg name="tgt_component" value="$(arg tgt_component)" />
+      <arg name="log_output" value="$(arg log_output)" />
+      <arg name="fcu_protocol" value="$(arg fcu_protocol)" />
+      <arg name="respawn_mavros" default="$(arg respawn_mavros)" />
+  </include>
+
+    <!-- Launch PX4 SITL -->
+    <include file="$(find px4)/launch/px4.launch">
+        <arg name="vehicle" value="$(arg vehicle)"/>
+    </include>
+
+    <!-- Launch Gazebo -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="gui" value="$(arg gui)"/>
+        <arg name="world_name" value="$(arg world)"/>
+    </include>
+
+    <!-- Spawn vehicle model -->
+    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen"
+          args="-sdf -database $(arg model) -model $(arg vehicle) -z 0.85">
+    </node>
+</launch>
