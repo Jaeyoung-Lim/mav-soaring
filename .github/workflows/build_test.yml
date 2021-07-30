@@ -5,7 +5,13 @@ on: [push]
 jobs:
   melodicbuild:
     runs-on: ubuntu-latest
-    container: px4io/px4-dev-ros-melodic:2019-10-24
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {rosdistro: 'melodic', container: 'px4io/px4-dev-ros-melodic:2021-07-13'}
+          - {rosdistro: 'noetic', container: 'px4io/px4-dev-ros-noetic:2021-07-13'}
+    container: ${{ matrix.config.container }}
     steps:
     - uses: actions/checkout@v1
       with:
@@ -19,12 +25,12 @@ jobs:
         mkdir -p $HOME/catkin_ws/src;
         cd $HOME/catkin_ws
         catkin init
-        catkin config --extend "/opt/ros/melodic"
+        catkin config --extend "/opt/ros/${{matrix.config.rosdistro}}"
         catkin config --merge-devel
         cd $HOME/catkin_ws/src
         ln -s $GITHUB_WORKSPACE
         cd $HOME/catkin_ws
-        wstool init src src/mav_soaring/dependencies.rosinstall
+        wstool init src src/mav-soaring/dependencies.rosinstall
         wstool update -t src -j4
         rosdep update
         rosdep install --from-paths src --ignore-src -y --rosdistro $ROS_DISTRO
@@ -35,7 +41,8 @@ jobs:
       run: |
         cd $HOME/catkin_ws/src
         catkin config --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCATKIN_ENABLE_TESTING=True
-        catkin build thermal_soaring --no-deps -v -i --catkin-make-args tests
+        catkin build thermal_soaring ergodic_soaring --no-deps -v -i --catkin-make-args tests
         source $HOME/catkin_ws/devel/setup.bash
         status=0 && for f in $HOME/catkin_ws/devel/lib/*/*-test; do $f || exit 1; done
       shell: bash
+  

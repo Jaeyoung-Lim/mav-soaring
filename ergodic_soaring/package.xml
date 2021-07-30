@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<package>
+  <name>ergodic_soaring</name>
+  <version>0.0.0</version>
+  <description>ROS package to estimate and exploit thermals for fixed wing MAVs</description>
+
+  <maintainer email="jalim@ethz.ch">Jaeyoung Lim</maintainer>
+
+  <license>BSD</license>
+
+
+  <build_depend>dynamic_reconfigure</build_depend>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>catkin_simple</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>mavros_msgs</build_depend>
+  <build_depend>eigen_catkin</build_depend>
+  <build_depend>soaring_msgs</build_depend>
+  <build_depend>grid_map_core</build_depend>
+  <build_depend>grid_map_cv</build_depend>
+  <build_depend>grid_map_ros</build_depend>
+  <build_depend>grid_map_msgs</build_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>catkin_simple</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>mavros</run_depend>
+  <run_depend>mavros_msgs</run_depend>
+  <run_depend>soaring_msgs</run_depend>
+  <run_depend> grid_map_visualization</run_depend>
+  <run_depend>grid_map_rviz_plugin</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
