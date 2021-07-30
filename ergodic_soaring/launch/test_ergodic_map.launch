@@ -1,0 +1,9 @@
+<launch>
+  <arg name="visualization" default="true"/>
+  <node name="ergodic" pkg="ergodic_soaring" type="test_ergodic_map_node" output="screen" />
+
+  <group if="$(arg visualization)">
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find ergodic_soaring)/launch/config.rviz" />
+  </group>
+
+</launch>
