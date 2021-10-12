@@ -8,16 +8,15 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   dynamic_reconfigure
   tf
-  mavros
-  mavros_extras
-  mavros_msgs
-  mavlink
-  grid_map
+  grid_map_core
+  grid_map_cv
+  grid_map_msgs
+  grid_map_ros
 )
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp rospy std_msgs mavros_msgs geometry_msgs sensor_msgs tf grid_map
+  CATKIN_DEPENDS roscpp rospy std_msgs mavros_msgs geometry_msgs sensor_msgs tf
 )
 
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})

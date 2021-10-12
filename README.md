@@ -1,6 +1,6 @@
 # mav_soaring
 
-![Build Test](https://github.com/Jaeyoung-Lim/mav_soaring/workflows/Build%20Test/badge.svg)
+[![Build Test](https://github.com/Jaeyoung-Lim/mav-soaring/actions/workflows/build_test.yml/badge.svg)](https://github.com/Jaeyoung-Lim/mav-soaring/actions/workflows/build_test.yml)
 
 ROS package enable autonomous soaring for px4 powered drones
 - thermeal soaring: enable tracking and exploiting thermals while completing the mission
