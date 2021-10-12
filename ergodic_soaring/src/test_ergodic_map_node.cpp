@@ -42,11 +42,11 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh_private("~");
 
   ros::Publisher grid_map_pub = nh.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
-  ;
 
   std::shared_ptr<ErgodicController> ergodic_controller_ = std::make_shared<ErgodicController>();
 
-  ergodic_controller_->FourierTransform();
+  FourierCoefficients fourier_coeff = ergodic_controller_->FourierTransform(ergodic_controller_->getGridMap());
+  ergodic_controller_->InverseFourierTransform(fourier_coeff, "reconstruction");
 
   while (true) {
     ergodic_controller_->getGridMap().setTimestamp(ros::Time::now().toNSec());

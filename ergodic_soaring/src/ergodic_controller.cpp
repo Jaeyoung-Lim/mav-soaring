@@ -52,7 +52,6 @@ ErgodicController::ErgodicController() {
 
   // Initialize gridmap layers
   grid_map_["distribution"].setConstant(0);
-  grid_map_["reconstruction"].setConstant(0);
   grid_map::Matrix &layer_elevation = grid_map_["distribution"];
 
   double sum{0.0};
@@ -80,46 +79,87 @@ ErgodicController::ErgodicController() {
 
 ErgodicController::~ErgodicController() {}
 
-void ErgodicController::FourierTransform() {
-  int K = 20;  // Number of Fourier coefficients
+FourierCoefficients ErgodicController::FourierTransform(grid_map::GridMap &distribution_map) {
+  int K = 10;  // Number of Fourier coefficients
+  double L_1 = distribution_map.getLength()[0];
+  double L_2 = distribution_map.getLength()[1];
+  double cell_area = std::pow(distribution_map.getResolution(), 2);
 
-  double L_1 = grid_map_.getLength()[0];
-  double L_2 = grid_map_.getLength()[1];
-  double cell_area = std::pow(grid_map_.getResolution(), 2);
-  std::cout << std::endl << "Resolution: " << cell_area << std::endl;
-
-  fourier_coefficents_.resize(K * K);
-  fourier_normalization_.resize(K * K);
-
-  grid_map::Matrix &layer_elevation = grid_map_["distribution"];
+  FourierCoefficients fourier;
+  fourier.coefficents.resize(K * K);
+  fourier.normalization.resize(K * K);
 
   for (size_t i = 0; i < K; i++) {
     for (size_t j = 0; j < K; j++) {
       double h_k_sum{0.0};  // fourier coefficients
-      double phi_k{0.0};    // fourier coefficients
-      for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
+      for (grid_map::GridMapIterator iterator(distribution_map); !iterator.isPastEnd(); ++iterator) {
         const grid_map::Index gridMapIndex = *iterator;
         Eigen::Vector2d cell_pos;
-        grid_map_.getPosition(gridMapIndex, cell_pos);
+        distribution_map.getPosition(gridMapIndex, cell_pos);
         // TODO: Reconstructed sum is always off by a factor of 4
-        h_k_sum += 4 * std::pow(std::cos(i * cell_pos(0) * M_PI / L_1), 2) *
-                   std::pow(std::cos(j * cell_pos(1) * M_PI / L_2), 2) * cell_area;
+        h_k_sum = h_k_sum + 4 * std::pow(std::cos(i * cell_pos(0) * M_PI / L_1), 2) *
+                                std::pow(std::cos(j * cell_pos(1) * M_PI / L_2), 2) * cell_area;
       }
       double h_k = std::sqrt(h_k_sum);
 
-      for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
+      double phi_k{0.0};  // fourier coefficients
+      for (grid_map::GridMapIterator iterator(distribution_map); !iterator.isPastEnd(); ++iterator) {
         const grid_map::Index gridMapIndex = *iterator;
         Eigen::Vector3d cell_pos;
-        grid_map_.getPosition3("distribution", gridMapIndex, cell_pos);
-        double F_k = (1 / h_k) * std::cos(i * cell_pos(0) * M_PI / L_1) * std::cos(j * cell_pos(1) * M_PI / L_2);
+        distribution_map.getPosition3("distribution", gridMapIndex, cell_pos);
+        double F_k = (1 / h_k) * BasisFunction(i, L_1, cell_pos(0)) * BasisFunction(j, L_2, cell_pos(1));
         phi_k += cell_pos(2) * F_k * cell_area;
       }
-      fourier_normalization_[K * i + j] = h_k;
-      fourier_coefficents_[K * i + j] = phi_k;
+      fourier.normalization[K * i + j] = h_k;
+      fourier.coefficents[K * i + j] = phi_k;
     }
   }
+  return fourier;
+}
 
-  grid_map::Matrix &layer_reconstruction = grid_map_["reconstruction"];
+FourierCoefficients ErgodicController::FourierTransform(std::vector<Eigen::Vector2d> trajectory) {
+  /// WIP: Fourier transformation of trajectory
+  int K = 10;  // Number of Fourier coefficients
+  FourierCoefficients fourier;
+  fourier.coefficents.resize(K * K);
+  fourier.normalization.resize(K * K);
+  double dt = 0.1;
+  double L_1 = grid_map_.getLength()[0];
+  double L_2 = grid_map_.getLength()[1];
+
+  fourier.coefficents.resize(K * K);
+  fourier.normalization.resize(K * K);
+
+  for (size_t i = 0; i < K; i++) {
+    for (size_t j = 0; j < K; j++) {
+      double h_k_sum{0.0};  // fourier coefficients
+      for (auto pos : trajectory) {
+        h_k_sum = h_k_sum + 4 * std::pow(std::cos(i * pos(0) * M_PI / L_1), 2) *
+                                std::pow(std::cos(j * pos(1) * M_PI / L_2), 2) * dt;
+      }
+      double h_k = std::sqrt(h_k_sum);
+
+      double phi_k{0.0};  // fourier coefficients
+      for (auto pos : trajectory) {
+        double F_k = (1 / h_k) * BasisFunction(i, L_1, pos(0)) * BasisFunction(j, L_2, pos(1));
+        phi_k += F_k * dt;
+      }
+      fourier.normalization[K * i + j] = h_k;
+      fourier.coefficents[K * i + j] = phi_k;
+    }
+  }
+  return fourier;
+}
+
+void ErgodicController::InverseFourierTransform(FourierCoefficients &fourier, const std::string layer) {
+  int K = 10;  // Number of Fourier coefficients
+  double L_1 = grid_map_.getLength()[0];
+  double L_2 = grid_map_.getLength()[1];
+
+  double cell_area = std::pow(grid_map_.getResolution(), 2);
+  grid_map_.add(layer);
+  /// TODO: Reconstruct map from fourier transform
+  grid_map::Matrix &layer_reconstruction = grid_map_[layer];
   double sum{0.0};
   for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
     const grid_map::Index gridMapIndex = *iterator;
@@ -129,9 +169,9 @@ void ErgodicController::FourierTransform() {
     double phi{0.0};
     for (size_t i = 0; i < K; i++) {
       for (size_t j = 0; j < K; j++) {
-        double h_k = fourier_normalization_[K * i + j];
-        double F_k = (1 / h_k) * std::cos(i * cell_pos(0) * M_PI / L_1) * std::cos(j * cell_pos(1) * M_PI / L_2);
-        phi += fourier_coefficents_[K * i + j] * F_k;
+        double h_k = fourier.normalization[K * i + j];
+        phi += fourier.coefficents[K * i + j] * (1 / h_k) * BasisFunction(i, L_1, cell_pos(0)) *
+               BasisFunction(j, L_2, cell_pos(1));
       }
     }
     layer_reconstruction(gridMapIndex(0), gridMapIndex(1)) = phi;
@@ -139,12 +179,6 @@ void ErgodicController::FourierTransform() {
   }
   // TODO: Reconstructed sum is always off by a factor of 4
   std::cout << "Reconstructed sum: " << sum << std::endl;
-
-  /// TODO: Fourier transformation of trajectory
-}
-
-void ErgodicController::InverseFourierTransform() {
-  /// TODO: Reconstruct map from fourier transform
 }
 
 bool ErgodicController::Solve() {
