@@ -1,17 +1,31 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ergodic_soaring)
 
-include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
-
-find_package(catkin_simple REQUIRED)
-catkin_simple(ALL_DEPS_REQUIRED)
-
 add_definitions(-std=c++14)
+
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  rospy
+  dynamic_reconfigure
+  tf
+  mavros
+  mavros_extras
+  mavros_msgs
+  mavlink
+  grid_map
+)
+
+catkin_package(
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS roscpp rospy std_msgs mavros_msgs geometry_msgs sensor_msgs tf grid_map
+)
+
+include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 
 #############
 # LIBRARIES #
 #############
-cs_add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME}
   src/ergodic_soaring.cpp
   src/ergodic_controller.cpp
 )
@@ -20,21 +34,15 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 ############
 # BINARIES #
 ############
-cs_add_executable(ergodic_soaring_node
+add_executable(ergodic_soaring_node
   src/ergodic_soaring_node.cpp
 )
 target_link_libraries(ergodic_soaring_node ${PROJECT_NAME} ${catkin_LIBRARIES})
 
-cs_add_executable(test_ergodic_map_node
+add_executable(test_ergodic_map_node
   src/test_ergodic_map_node.cpp
 )
 target_link_libraries(test_ergodic_map_node ${PROJECT_NAME} ${catkin_LIBRARIES})
-
-##########
-# EXPORT #
-##########
-cs_install()
-cs_export()
 
 ##########
 # TESTING#
