@@ -30,55 +30,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
-#ifndef ERGODIC_CONTROLLER_H
-#define ERGODIC_CONTROLLER_H
 
-#include <grid_map_msgs/GridMap.h>
-#include <grid_map_core/GridMap.hpp>
-#include <grid_map_core/iterators/GridMapIterator.hpp>
+#include "ergodic_soaring/ergodic_controller.h"
 
-#include <Eigen/Dense>
-#include <vector>
+#include <ros/ros.h>
+#include <grid_map_ros/GridMapRosConverter.hpp>
 
-struct Settings {
-  double center_lat{0.0};
-  double center_lon{0.0};
-  double delta_easting{100.0};
-  double delta_northing{100.0};
-  double resolution{10.0};
-};
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "test_ergodic_map");
+  ros::NodeHandle nh("");
+  ros::NodeHandle nh_private("~");
 
-struct State {
-  Eigen::Vector3d position{Eigen::Vector3d::Zero()};
-  double heading{0.0};
-};
+  ros::Publisher grid_map_pub = nh.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
 
-struct FourierCoefficients {
-  std::vector<double> coefficents{};
-  std::vector<double> normalization{};
-};
+  /// Generate circular trajectory as an example
+  double T = 20.0;
+  double radius = 3.0;
+  double omega = 10.0;
+  double dt = 0.1;
+  std::vector<Eigen::Vector2d> trajectory;
 
-class ErgodicController {
- public:
-  ErgodicController();
-  virtual ~ErgodicController();
-  grid_map::GridMap &getGridMap() { return grid_map_; };
-  FourierCoefficients FourierTransform(grid_map::GridMap &distribution_map);
-  FourierCoefficients FourierTransform(std::vector<Eigen::Vector2d> trajectory);
-  void InverseFourierTransform(FourierCoefficients &fourier, const std::string layer);
+  for (double t = 0.0; t < T; t += dt) {
+    trajectory.push_back(Eigen::Vector2d(radius * std::cos(t * omega), radius * std::sin(t * omega)));
+  }
 
- private:
-  inline double BasisFunction(const int k, const double length, const double x) {
-    return std::cos(k * M_PI * x / length);
-  };
-  bool Solve();
-  void LinearizeDynamics(State state, Eigen::Matrix3d &A, Eigen::Vector3d &B);
-  void LQ(State state, std::vector<Eigen::Matrix3d> &A, std::vector<Eigen::Vector3d> &B,
-          std::vector<Eigen::Matrix3d> &K, std::vector<Eigen::Matrix3d> &C);
+  std::shared_ptr<ErgodicController> ergodic_controller_ = std::make_shared<ErgodicController>();
 
-  grid_map::GridMap grid_map_;
-  FourierCoefficients cfourier_map_;
-  FourierCoefficients cfourier_trajectory_;
-};
+  FourierCoefficients fourier_coeff = ergodic_controller_->FourierTransform(trajectory);
+  ergodic_controller_->InverseFourierTransform(fourier_coeff, "reconstruction");
 
-#endif
+  while (true) {
+    ergodic_controller_->getGridMap().setTimestamp(ros::Time::now().toNSec());
+    grid_map_msgs::GridMap message;
+    grid_map::GridMapRosConverter::toMessage(ergodic_controller_->getGridMap(), message);
+    grid_map_pub.publish(message);
+    ros::Duration(10.0).sleep();
+  }
+
+  ros::spin();
+  return 0;
+}

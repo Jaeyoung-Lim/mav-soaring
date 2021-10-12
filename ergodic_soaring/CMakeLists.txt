@@ -43,6 +43,11 @@ add_executable(test_ergodic_map_node
 )
 target_link_libraries(test_ergodic_map_node ${PROJECT_NAME} ${catkin_LIBRARIES})
 
+add_executable(test_ergodic_trajectory_node
+  src/test_ergodic_trajectory_node.cpp
+)
+target_link_libraries(test_ergodic_trajectory_node ${PROJECT_NAME} ${catkin_LIBRARIES})
+
 ##########
 # TESTING#
 ##########
