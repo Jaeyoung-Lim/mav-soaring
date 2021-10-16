@@ -38,10 +38,6 @@
 
 #include "ergodic_soaring/fourier_coefficient.h"
 
-#include <grid_map_msgs/GridMap.h>
-#include <grid_map_core/GridMap.hpp>
-#include <grid_map_core/iterators/GridMapIterator.hpp>
-
 #include <Eigen/Dense>
 #include <vector>
 
@@ -49,15 +45,19 @@ class ErgodicController {
  public:
   ErgodicController();
   virtual ~ErgodicController();
-  bool Solve(const FourierCoefficients coefficients);
+  bool Solve(FourierCoefficient &distribution);
 
  private:
   void LinearizeDynamics(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
                          std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B);
-  void DescentDirection(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
+  void DescentDirection(std::vector<State> &trajectory, FourierCoefficient &distribution,
+                        std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B,
                         std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
                         std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v);
+  Eigen::Matrix<double, NUM_STATES, 1> getCostGradient(State &state, FourierCoefficient &trajectory_distribution,
+                                                       FourierCoefficient &distribution);
+  std::shared_ptr<FourierCoefficient> distribution_coefficients;
 };
 
 #endif
