@@ -31,7 +31,7 @@
  *
  ****************************************************************************/
 
-#include "ergodic_soaring/ergodic_controller.h"
+#include "ergodic_soaring/fourier_coefficient.h"
 
 #include <ros/ros.h>
 #include <grid_map_ros/GridMapRosConverter.hpp>
@@ -54,10 +54,10 @@ int main(int argc, char** argv) {
     trajectory.push_back(Eigen::Vector2d(radius * std::cos(t * omega), radius * std::sin(t * omega)));
   }
 
-  std::shared_ptr<ErgodicController> ergodic_controller_ = std::make_shared<ErgodicController>();
+  std::shared_ptr<FourierCoefficient> ergodic_controller_ = std::make_shared<FourierCoefficient>();
 
-  FourierCoefficients fourier_coeff = ergodic_controller_->FourierTransform(trajectory);
-  ergodic_controller_->InverseFourierTransform(fourier_coeff, "reconstruction");
+  ergodic_controller_->FourierTransform(trajectory);
+  ergodic_controller_->InverseFourierTransform("reconstruction");
 
   while (true) {
     ergodic_controller_->getGridMap().setTimestamp(ros::Time::now().toNSec());

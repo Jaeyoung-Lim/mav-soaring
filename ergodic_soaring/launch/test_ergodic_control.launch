@@ -1,0 +1,5 @@
+<launch>
+  <arg name="visualization" default="true"/>
+  <node name="ergodic" pkg="ergodic_soaring" type="test_ergodic_control_node" output="screen" />
+
+</launch>

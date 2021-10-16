@@ -30,13 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
-#ifndef ERGODIC_CONTROLLER_H
-#define ERGODIC_CONTROLLER_H
-
-#define NUM_STATES 3
-#define NUM_INPUTS 1
-
-#include "ergodic_soaring/fourier_coefficient.h"
+#ifndef FOURIER_COEFFICIENT_H
+#define FOURIER_COEFFICIENT_H
 
 #include <grid_map_msgs/GridMap.h>
 #include <grid_map_core/GridMap.hpp>
@@ -45,28 +40,51 @@
 #include <Eigen/Dense>
 #include <vector>
 
-class ErgodicController {
+struct Settings {
+  double center_lat{0.0};
+  double center_lon{0.0};
+  double delta_easting{100.0};
+  double delta_northing{100.0};
+  double resolution{10.0};
+};
+
+struct State {
+  Eigen::Vector3d position{Eigen::Vector3d::Zero()};
+  double heading{0.0};
+};
+
+struct FourierCoefficients {
+  Eigen::ArrayXXd coefficients{};
+  Eigen::ArrayXXd normalization{};
+};
+
+class FourierCoefficient {
  public:
-  ErgodicController();
-  virtual ~ErgodicController();
+  FourierCoefficient();
+  virtual ~FourierCoefficient(){};
   grid_map::GridMap &getGridMap() { return grid_map_; };
-  bool Solve();
+  void FourierTransform(grid_map::GridMap &distribution_map);
+  void FourierTransform(std::vector<Eigen::Vector2d> trajectory);
+  void InverseFourierTransform(const std::string layer);
+  Eigen::ArrayXXd getCoefficients() { return coefficients_; };
+  Eigen::ArrayXXd getNormalization() { return normalization_; };
+  FourierCoefficients getFourierCoefficients() {
+    FourierCoefficients coeff;
+    coeff.coefficients = coefficients_;
+    coeff.normalization = normalization_;
+    return coeff;
+  };
 
  private:
   inline double BasisFunction(const int k, const double length, const double x) {
     return std::cos(k * M_PI * x / length);
   };
-  void LinearizeDynamics(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
-                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B);
-  void DescentDirection(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
-                        std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B,
-                        std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
-                        std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v);
 
   grid_map::GridMap grid_map_;
-  FourierCoefficients cfourier_map_;
-  FourierCoefficients cfourier_trajectory_;
+  Eigen::ArrayXXd coefficients_;
+  Eigen::ArrayXXd normalization_;
   int K_{20};
+  double v_c_{0.0};
 };
 
 #endif

@@ -27,6 +27,7 @@ include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${Eigen_
 add_library(${PROJECT_NAME}
   src/ergodic_soaring.cpp
   src/ergodic_controller.cpp
+  src/fourier_coefficient.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
@@ -47,6 +48,11 @@ add_executable(test_ergodic_trajectory_node
   src/test_ergodic_trajectory_node.cpp
 )
 target_link_libraries(test_ergodic_trajectory_node ${PROJECT_NAME} ${catkin_LIBRARIES})
+
+add_executable(test_ergodic_control_node
+  src/test_ergodic_control_node.cpp
+)
+target_link_libraries(test_ergodic_control_node ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ##########
 # TESTING#
