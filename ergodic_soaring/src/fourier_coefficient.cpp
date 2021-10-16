@@ -1,68 +1,12 @@
 #include "ergodic_soaring/fourier_coefficient.h"
 
 FourierCoefficient::FourierCoefficient(int num_coefficients) : K_(num_coefficients) {
-  /// TODO: Move grid_map depdendency out of this class
-
   coefficients_ = Eigen::ArrayXXd(K_, K_);
   normalization_ = Eigen::ArrayXXd(K_, K_);
-
-  grid_map_ = grid_map::GridMap({"distribution", "reconstruction"});
-  // Set Gridmap properties
-  Settings settings;
-  settings.center_lat = 0.0;
-  settings.center_lon = 0.0;
-  settings.resolution = 0.1;
-  settings.delta_easting = 10.0;
-  settings.delta_northing = 10.0;
-  grid_map_.setFrameId("world");
-  grid_map_.setGeometry(grid_map::Length(settings.delta_easting, settings.delta_northing), settings.resolution,
-                        grid_map::Position(settings.center_lat, settings.center_lon));
-  printf(
-      "Created map with size %f x %f m (%i x %i cells).\n The center of the "
-      "map is located at (%f, %f) in the %s frame.",
-      grid_map_.getLength().x(), grid_map_.getLength().y(), grid_map_.getSize()(0), grid_map_.getSize()(1),
-      grid_map_.getPosition().x(), grid_map_.getPosition().y(), grid_map_.getFrameId().c_str());
-
-  // Initialize gridmap layers
-  grid_map_["distribution"].setConstant(0);
-  generateGaussianDistribution();
-}
-
-void FourierCoefficient::generateGaussianDistribution() {
-  grid_map::Matrix &layer_elevation = grid_map_["distribution"];
-
-  double sum{0.0};
-  double cell_area = std::pow(grid_map_.getResolution(), 2);
-  for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
-    const grid_map::Index gridMapIndex = *iterator;
-    grid_map::Position cell_pos;
-    grid_map_.getPosition(gridMapIndex, cell_pos);
-
-    double sigma = 5.0;
-    grid_map::Position mean = Eigen::Vector2d::Zero();
-    Eigen::Matrix2d variance = sigma * Eigen::Matrix2d::Identity();
-    Eigen::Vector2d error_pos = cell_pos - mean;
-    double point_distribution = 1 / (std::sqrt(std::pow(2 * M_PI, 2) * variance.norm())) *
-                                std::exp(-0.5 * error_pos.transpose() * variance * error_pos);
-    sum += point_distribution;
-    layer_elevation(gridMapIndex(0), gridMapIndex(1)) = point_distribution;
-  }
-  v_c_ = 1 / sum;
-  double normailized_sum{0.0};
-
-  for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
-    const grid_map::Index gridMapIndex = *iterator;
-    layer_elevation(gridMapIndex(0), gridMapIndex(1)) = layer_elevation(gridMapIndex(0), gridMapIndex(1)) * v_c_;
-    normailized_sum += layer_elevation(gridMapIndex(0), gridMapIndex(1));
-  }
-  std::cout << std::endl;
-  std::cout << "Genearating sample distribution=====" << std::endl;
-  std::cout << "  - Sum of distribution: " << sum << std::endl;
-  std::cout << "  - normalized_sum: " << normailized_sum << std::endl;
-  std::cout << "  - V_c: :" << v_c_ << std::endl;
 }
 
 void FourierCoefficient::FourierTransform(grid_map::GridMap &distribution_map) {
+  grid_map_ = distribution_map;
   double L_1 = distribution_map.getLength()[0];
   double L_2 = distribution_map.getLength()[1];
   double cell_area = std::pow(distribution_map.getResolution(), 2);

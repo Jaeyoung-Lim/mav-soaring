@@ -43,6 +43,19 @@ int main(int argc, char** argv) {
 
   ros::Publisher grid_map_pub = nh.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
 
+  grid_map::GridMap grid_map_ = grid_map::GridMap({"distribution"});
+
+  // Set Gridmap properties
+  Settings settings;
+  settings.center_lat = 0.0;
+  settings.center_lon = 0.0;
+  settings.resolution = 0.1;
+  settings.delta_easting = 10.0;
+  settings.delta_northing = 10.0;
+  grid_map_.setFrameId("world");
+  grid_map_.setGeometry(grid_map::Length(settings.delta_easting, settings.delta_northing), settings.resolution,
+                        grid_map::Position(settings.center_lat, settings.center_lon));
+
   /// Generate circular trajectory as an example
   double T = 20.0;
   double radius = 3.0;
@@ -57,9 +70,10 @@ int main(int argc, char** argv) {
   }
 
   std::shared_ptr<FourierCoefficient> fourier_coefficient = std::make_shared<FourierCoefficient>(20);
+  fourier_coefficient->setGridMap(grid_map_);
 
   fourier_coefficient->FourierTransform(trajectory);
-  fourier_coefficient->InverseFourierTransform("reconstruction");
+  fourier_coefficient->InverseFourierTransform("distribution");
 
   while (true) {
     fourier_coefficient->getGridMap().setTimestamp(ros::Time::now().toNSec());

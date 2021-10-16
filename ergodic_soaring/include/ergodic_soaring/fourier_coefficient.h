@@ -62,6 +62,7 @@ class FourierCoefficient {
   void FourierTransform(grid_map::GridMap &distribution_map);
   void FourierTransform(std::vector<State> trajectory);
   void InverseFourierTransform(const std::string layer);
+  void setGridMap(grid_map::GridMap &grid_map) { grid_map_ = grid_map; };
   Eigen::ArrayXXd getCoefficients() { return coefficients_; };
   Eigen::ArrayXXd getNormalization() { return normalization_; };
   Eigen::Matrix<double, 3, 1> getErgodicGradient(Eigen::ArrayXXd trajectory_coefficients);
@@ -70,13 +71,11 @@ class FourierCoefficient {
   inline double BasisFunction(const int k, const double length, const double x) {
     return std::cos(k * M_PI * x / length);
   };
-  void generateGaussianDistribution();
 
   grid_map::GridMap grid_map_;
   Eigen::ArrayXXd coefficients_;
   Eigen::ArrayXXd normalization_;
   int K_{20};
-  double v_c_{0.0};
 };
 
 #endif
