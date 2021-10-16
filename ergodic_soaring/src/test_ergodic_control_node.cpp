@@ -45,10 +45,10 @@ int main(int argc, char** argv) {
   ros::Publisher grid_map_pub = nh.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
 
   std::shared_ptr<ErgodicController> ergodic_controller = std::make_shared<ErgodicController>();
-  std::shared_ptr<FourierCoefficient> fourier_coefficients = std::make_shared<FourierCoefficient>();
+  std::shared_ptr<FourierCoefficient> fourier_coefficients = std::make_shared<FourierCoefficient>(20);
 
   // Create trajectory that matches the target distribution
-  ergodic_controller->Solve();
+  ergodic_controller->Solve(fourier_coefficients->getFourierCoefficients());
 
   while (true) {
     fourier_coefficients->getGridMap().setTimestamp(ros::Time::now().toNSec());

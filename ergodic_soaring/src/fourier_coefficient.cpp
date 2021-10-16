@@ -1,6 +1,12 @@
 #include "ergodic_soaring/fourier_coefficient.h"
 
-FourierCoefficient::FourierCoefficient() {
+FourierCoefficient::FourierCoefficient(int num_coefficients) : 
+    K_(num_coefficients) {
+    ///TODO: Move grid_map depdendency out of this class
+
+  coefficients_ = Eigen::ArrayXXd(K_, K_);
+  normalization_ = Eigen::ArrayXXd(K_, K_);
+
   grid_map_ = grid_map::GridMap({"distribution", "reconstruction"});
   // Set Gridmap properties
   Settings settings;
@@ -20,6 +26,10 @@ FourierCoefficient::FourierCoefficient() {
 
   // Initialize gridmap layers
   grid_map_["distribution"].setConstant(0);
+  generateGaussianDistribution();
+}
+
+void FourierCoefficient::generateGaussianDistribution() {
   grid_map::Matrix &layer_elevation = grid_map_["distribution"];
 
   double sum{0.0};
@@ -62,9 +72,6 @@ void FourierCoefficient::FourierTransform(grid_map::GridMap &distribution_map) {
   std::cout << "  - resolution: " << distribution_map.getResolution() << std::endl;
   std::cout << "  - L1: " << L_1 << std::endl;
   std::cout << "  - L2: " << L_2 << std::endl;
-
-  coefficients_ = Eigen::ArrayXXd(K_, K_);
-  normalization_ = Eigen::ArrayXXd(K_, K_);
 
   for (size_t i = 0; i < K_; i++) {
     for (size_t j = 0; j < K_; j++) {

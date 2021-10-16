@@ -49,24 +49,15 @@ class ErgodicController {
  public:
   ErgodicController();
   virtual ~ErgodicController();
-  grid_map::GridMap &getGridMap() { return grid_map_; };
-  bool Solve();
+  bool Solve(const FourierCoefficients coefficients);
 
  private:
-  inline double BasisFunction(const int k, const double length, const double x) {
-    return std::cos(k * M_PI * x / length);
-  };
   void LinearizeDynamics(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
                          std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B);
   void DescentDirection(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B,
                         std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
                         std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v);
-
-  grid_map::GridMap grid_map_;
-  FourierCoefficients cfourier_map_;
-  FourierCoefficients cfourier_trajectory_;
-  int K_{20};
 };
 
 #endif

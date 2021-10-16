@@ -54,6 +54,7 @@ ErgodicSoaring::ErgodicSoaring(const ros::NodeHandle& nh, const ros::NodeHandle&
   grid_map_pub_ = nh_.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
 
   ergodic_controller_ = std::make_shared<ErgodicController>();
+  ergodic_controller_ = std::make_shared<ErgodicController>();
 }
 
 ErgodicSoaring::~ErgodicSoaring() {
@@ -74,8 +75,8 @@ void ErgodicSoaring::cmdloopCallback(const ros::TimerEvent& event) {}
 void ErgodicSoaring::statusloopCallback(const ros::TimerEvent& event) { publishMap(); }
 
 void ErgodicSoaring::publishMap() {
-  ergodic_controller_->getGridMap().setTimestamp(ros::Time::now().toNSec());
+  // ergodic_controller_->getGridMap().setTimestamp(ros::Time::now().toNSec());
   grid_map_msgs::GridMap message;
-  grid_map::GridMapRosConverter::toMessage(ergodic_controller_->getGridMap(), message);
+  // grid_map::GridMapRosConverter::toMessage(ergodic_controller_->getGridMap(), message);
   grid_map_pub_.publish(message);
 }

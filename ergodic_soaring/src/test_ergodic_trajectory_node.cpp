@@ -54,15 +54,15 @@ int main(int argc, char** argv) {
     trajectory.push_back(Eigen::Vector2d(radius * std::cos(t * omega), radius * std::sin(t * omega)));
   }
 
-  std::shared_ptr<FourierCoefficient> ergodic_controller_ = std::make_shared<FourierCoefficient>();
+  std::shared_ptr<FourierCoefficient> fourier_coefficient = std::make_shared<FourierCoefficient>(20);
 
-  ergodic_controller_->FourierTransform(trajectory);
-  ergodic_controller_->InverseFourierTransform("reconstruction");
+  fourier_coefficient->FourierTransform(trajectory);
+  fourier_coefficient->InverseFourierTransform("reconstruction");
 
   while (true) {
-    ergodic_controller_->getGridMap().setTimestamp(ros::Time::now().toNSec());
+    fourier_coefficient->getGridMap().setTimestamp(ros::Time::now().toNSec());
     grid_map_msgs::GridMap message;
-    grid_map::GridMapRosConverter::toMessage(ergodic_controller_->getGridMap(), message);
+    grid_map::GridMapRosConverter::toMessage(fourier_coefficient->getGridMap(), message);
     grid_map_pub.publish(message);
     ros::Duration(10.0).sleep();
   }

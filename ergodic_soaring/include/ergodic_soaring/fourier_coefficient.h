@@ -60,7 +60,7 @@ struct FourierCoefficients {
 
 class FourierCoefficient {
  public:
-  FourierCoefficient();
+  FourierCoefficient(int num_coefficients);
   virtual ~FourierCoefficient(){};
   grid_map::GridMap &getGridMap() { return grid_map_; };
   void FourierTransform(grid_map::GridMap &distribution_map);
@@ -74,11 +74,13 @@ class FourierCoefficient {
     coeff.normalization = normalization_;
     return coeff;
   };
+  double getErgodicity();
 
  private:
   inline double BasisFunction(const int k, const double length, const double x) {
     return std::cos(k * M_PI * x / length);
   };
+  void generateGaussianDistribution();
 
   grid_map::GridMap grid_map_;
   Eigen::ArrayXXd coefficients_;

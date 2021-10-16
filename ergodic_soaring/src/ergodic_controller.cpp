@@ -36,39 +36,6 @@ ErgodicController::ErgodicController() {}
 
 ErgodicController::~ErgodicController() {}
 
-bool ErgodicController::Solve() {
-  std::cout << "Starting to solve ergodic control!" << std::endl;
-  std::vector<State> trajectory;
-  trajectory.resize(10);
-  /// TODO: Generate initial trajectory
-
-  bool exit = false;
-
-  while (!exit) {
-    // Linearize dynamics along the trajectory
-    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> A;
-    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> B;
-    LinearizeDynamics(trajectory, A, B);
-
-    /// Compute Descent direction
-    std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Z;  // State Descent direction
-    std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> U;  // Input Descent direction
-    DescentDirection(trajectory, A, B, Z, U);
-
-    /// TODO:  determine step size and descend
-    // 		step_size = get_step_size(tm.descender, em, tm, xd, ud, zd, vd, ad, bd, K, i)
-
-    /// TODO: Combine gradient descent
-    // 		# descend and project
-    // 		xd, ud = project(em, tm, K, xd, ud, zd, vd, step_size)
-
-    exit = true;
-  }
-  // 	return xd, ud
-
-  return true;
-}
-
 void ErgodicController::LinearizeDynamics(
     std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
     std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B) {  // Dubins plane
@@ -117,4 +84,37 @@ void ErgodicController::DescentDirection(std::vector<State> &trajectory,
     r[n] = a[n] + (A[n].transpose() - K[n].transpose() * B[n].transpose()) * r[n + 1] - K[n + 1].transpose() * b[n];
   }
   // Get Descent direction with forward pass
+}
+
+bool ErgodicController::Solve(const FourierCoefficients coefficients) {
+  std::cout << "Starting to solve ergodic control!" << std::endl;
+  std::vector<State> trajectory;
+  trajectory.resize(10);
+  /// TODO: Generate initial trajectory
+
+  bool exit = false;
+
+  while (!exit) {
+    // Linearize dynamics along the trajectory
+    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> A;
+    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> B;
+    LinearizeDynamics(trajectory, A, B);
+
+    /// Compute Descent direction
+    std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Z;  // State Descent direction
+    std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> U;  // Input Descent direction
+    DescentDirection(trajectory, A, B, Z, U);
+
+    /// TODO:  determine step size and descend
+    // 		step_size = get_step_size(tm.descender, em, tm, xd, ud, zd, vd, ad, bd, K, i)
+
+    /// TODO: Combine gradient descent
+    // 		# descend and project
+    // 		xd, ud = project(em, tm, K, xd, ud, zd, vd, step_size)
+
+    exit = true;
+  }
+  // 	return xd, ud
+
+  return true;
 }
