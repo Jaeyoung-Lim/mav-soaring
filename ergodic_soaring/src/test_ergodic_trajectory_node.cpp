@@ -48,10 +48,12 @@ int main(int argc, char** argv) {
   double radius = 3.0;
   double omega = 10.0;
   double dt = 0.1;
-  std::vector<Eigen::Vector2d> trajectory;
+  std::vector<State> trajectory;
 
   for (double t = 0.0; t < T; t += dt) {
-    trajectory.push_back(Eigen::Vector2d(radius * std::cos(t * omega), radius * std::sin(t * omega)));
+    State state;
+    state.position = Eigen::Vector3d(radius * std::cos(t * omega), radius * std::sin(t * omega), t * omega);
+    trajectory.push_back(state);
   }
 
   std::shared_ptr<FourierCoefficient> fourier_coefficient = std::make_shared<FourierCoefficient>(20);

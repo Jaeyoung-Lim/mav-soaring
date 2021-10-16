@@ -49,13 +49,9 @@ struct Settings {
 };
 
 struct State {
-  Eigen::Vector3d position{Eigen::Vector3d::Zero()};
-  double heading{0.0};
-};
-
-struct FourierCoefficients {
-  Eigen::ArrayXXd coefficients{};
-  Eigen::ArrayXXd normalization{};
+  Eigen::Vector3d position{Eigen::Vector3d::Zero()};  // x, y, heading
+  double input{0.0};                                  // yaw rate
+  double dt{0.1};                                     // Time step
 };
 
 class FourierCoefficient {
@@ -64,17 +60,11 @@ class FourierCoefficient {
   virtual ~FourierCoefficient(){};
   grid_map::GridMap &getGridMap() { return grid_map_; };
   void FourierTransform(grid_map::GridMap &distribution_map);
-  void FourierTransform(std::vector<Eigen::Vector2d> trajectory);
+  void FourierTransform(std::vector<State> trajectory);
   void InverseFourierTransform(const std::string layer);
   Eigen::ArrayXXd getCoefficients() { return coefficients_; };
   Eigen::ArrayXXd getNormalization() { return normalization_; };
-  FourierCoefficients getFourierCoefficients() {
-    FourierCoefficients coeff;
-    coeff.coefficients = coefficients_;
-    coeff.normalization = normalization_;
-    return coeff;
-  };
-  double getErgodicity();
+  Eigen::Matrix<double, 3, 1> getErgodicGradient(Eigen::ArrayXXd trajectory_coefficients);
 
  private:
   inline double BasisFunction(const int k, const double length, const double x) {

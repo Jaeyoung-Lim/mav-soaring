@@ -1,8 +1,7 @@
 #include "ergodic_soaring/fourier_coefficient.h"
 
-FourierCoefficient::FourierCoefficient(int num_coefficients) : 
-    K_(num_coefficients) {
-    ///TODO: Move grid_map depdendency out of this class
+FourierCoefficient::FourierCoefficient(int num_coefficients) : K_(num_coefficients) {
+  /// TODO: Move grid_map depdendency out of this class
 
   coefficients_ = Eigen::ArrayXXd(K_, K_);
   normalization_ = Eigen::ArrayXXd(K_, K_);
@@ -101,9 +100,7 @@ void FourierCoefficient::FourierTransform(grid_map::GridMap &distribution_map) {
   }
 }
 
-void FourierCoefficient::FourierTransform(std::vector<Eigen::Vector2d> trajectory) {
-  /// WIP: Fourier transformation of trajectory
-  FourierCoefficients fourier;
+void FourierCoefficient::FourierTransform(std::vector<State> trajectory) {
   double dt = 0.1;
   double T = trajectory.size() * dt;
   double L_1 = grid_map_.getLength()[0];
@@ -116,13 +113,15 @@ void FourierCoefficient::FourierTransform(std::vector<Eigen::Vector2d> trajector
   for (size_t i = 0; i < K_; i++) {
     for (size_t j = 0; j < K_; j++) {
       double h_k_sum{0.0};  // fourier coefficients
-      for (auto pos : trajectory) {
+      for (auto state : trajectory) {
+        Eigen::Vector3d pos = state.position;
         h_k_sum += std::pow(BasisFunction(i, L_1, pos(0)), 2) * std::pow(BasisFunction(j, L_2, pos(1)), 2);
       }
       double h_k = std::sqrt(h_k_sum);
 
       double phi_k{0.0};  // fourier coefficients
-      for (auto pos : trajectory) {
+      for (auto state : trajectory) {
+        Eigen::Vector3d pos = state.position;
         double F_k = (1 / h_k) * BasisFunction(i, L_1, pos(0)) * BasisFunction(j, L_2, pos(1));
         phi_k += F_k * dt / T;
       }
@@ -159,4 +158,19 @@ void FourierCoefficient::InverseFourierTransform(const std::string layer) {
   }
   std::cout << "Reconstruction Fourier====================" << std::endl;
   std::cout << "  - Sum of distribution: " << sum << std::endl;
+}
+
+Eigen::Matrix<double, 3, 1> FourierCoefficient::getErgodicGradient(Eigen::ArrayXXd trajectory_coefficients) {
+  int N = 100;
+
+  Eigen::Matrix<double, 3, 1> gradient;
+  for (int i = 0; i < K_; i++) {
+    for (int j = 0; j < K_; j++) {
+      double sigma_k = 1 / std::pow(1 + std::pow(Eigen::Vector2d(i, j).norm(), 2), 1.5);
+      /// TODO: Implement derivative of F_k;
+      Eigen::Matrix<double, 3, 1> delta_F_k;
+      gradient += (2 / N + 1) * sigma_k * (trajectory_coefficients(i, j) - coefficients_(i, j)) * delta_F_k;
+    }
+  }
+  return gradient;
 }
