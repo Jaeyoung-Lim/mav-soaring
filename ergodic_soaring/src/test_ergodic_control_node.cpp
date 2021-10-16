@@ -30,43 +30,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
-#ifndef ERGODIC_CONTROLLER_H
-#define ERGODIC_CONTROLLER_H
 
-#define NUM_STATES 3
-#define NUM_INPUTS 1
-
+#include "ergodic_soaring/ergodic_controller.h"
 #include "ergodic_soaring/fourier_coefficient.h"
 
-#include <grid_map_msgs/GridMap.h>
-#include <grid_map_core/GridMap.hpp>
-#include <grid_map_core/iterators/GridMapIterator.hpp>
+#include <ros/ros.h>
+#include <grid_map_ros/GridMapRosConverter.hpp>
 
-#include <Eigen/Dense>
-#include <vector>
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "test_ergodic_map");
+  ros::NodeHandle nh("");
+  ros::NodeHandle nh_private("~");
 
-class ErgodicController {
- public:
-  ErgodicController();
-  virtual ~ErgodicController();
-  grid_map::GridMap &getGridMap() { return grid_map_; };
-  bool Solve();
+  ros::Publisher grid_map_pub = nh.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
 
- private:
-  inline double BasisFunction(const int k, const double length, const double x) {
-    return std::cos(k * M_PI * x / length);
-  };
-  void LinearizeDynamics(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
-                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B);
-  void DescentDirection(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
-                        std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B,
-                        std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
-                        std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v);
+  std::shared_ptr<ErgodicController> ergodic_controller = std::make_shared<ErgodicController>();
+  std::shared_ptr<FourierCoefficient> fourier_coefficients = std::make_shared<FourierCoefficient>();
 
-  grid_map::GridMap grid_map_;
-  FourierCoefficients cfourier_map_;
-  FourierCoefficients cfourier_trajectory_;
-  int K_{20};
-};
+  // Create trajectory that matches the target distribution
+  ergodic_controller->Solve();
 
-#endif
+  while (true) {
+    fourier_coefficients->getGridMap().setTimestamp(ros::Time::now().toNSec());
+    grid_map_msgs::GridMap message;
+    grid_map::GridMapRosConverter::toMessage(fourier_coefficients->getGridMap(), message);
+    grid_map_pub.publish(message);
+    ros::Duration(10.0).sleep();
+  }
+
+  ros::spin();
+  return 0;
+}
