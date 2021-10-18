@@ -34,8 +34,24 @@
 #include "ergodic_soaring/ergodic_controller.h"
 #include "ergodic_soaring/fourier_coefficient.h"
 
+#include <nav_msgs/Path.h>
 #include <ros/ros.h>
 #include <grid_map_ros/GridMapRosConverter.hpp>
+
+geometry_msgs::PoseStamped vector3d2PoseStampedMsg(const Eigen::Vector3d position, const Eigen::Vector4d orientation) {
+  geometry_msgs::PoseStamped encode_msg;
+
+  encode_msg.header.stamp = ros::Time::now();
+  encode_msg.header.frame_id = "map";
+  encode_msg.pose.orientation.w = orientation(0);
+  encode_msg.pose.orientation.x = orientation(1);
+  encode_msg.pose.orientation.y = orientation(2);
+  encode_msg.pose.orientation.z = orientation(3);
+  encode_msg.pose.position.x = position(0);
+  encode_msg.pose.position.y = position(1);
+  encode_msg.pose.position.z = position(2);
+  return encode_msg;
+}
 
 void generateGaussianDistribution(grid_map::GridMap &grid_map) {
   double sum{0.0};
@@ -79,6 +95,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle nh_private("~");
 
   ros::Publisher grid_map_pub = nh.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
+  ros::Publisher trajectory_pub_ = nh.advertise<nav_msgs::Path>("path", 10);
 
   std::shared_ptr<ErgodicController> ergodic_controller = std::make_shared<ErgodicController>();
   // Fourier coefficients of the distribution
@@ -106,8 +123,24 @@ int main(int argc, char **argv) {
   /// TODO: Add interface for single iteration visualization
   ergodic_controller->setInitialTrajectory();
   int iter{0};
+
   while (true) {
     ergodic_controller->SolveSingleIter(target_distribution);
+    std::vector<State> traj = ergodic_controller->getTrajectory();
+    Eigen::Vector4d vehicle_attitude(1.0, 0.0, 0.0, 0.0);
+    std::vector<geometry_msgs::PoseStamped> trajectory_vector;
+    for (auto state : traj) {
+      trajectory_vector.insert(
+          trajectory_vector.begin(),
+          vector3d2PoseStampedMsg(Eigen::Vector3d(state.position(0), state.position(1), 10.0), vehicle_attitude));
+    }
+
+    nav_msgs::Path msg;
+    msg.header.stamp = ros::Time::now();
+    msg.header.frame_id = "world";
+    msg.poses = trajectory_vector;
+    trajectory_pub_.publish(msg);
+
     if (iter % 10 == 0) {
       target_distribution.getGridMap().setTimestamp(ros::Time::now().toNSec());
       grid_map_msgs::GridMap message;

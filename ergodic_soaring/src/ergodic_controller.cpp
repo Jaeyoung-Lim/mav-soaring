@@ -159,23 +159,23 @@ bool ErgodicController::Solve(FourierCoefficient &distribution) {
 }
 
 bool ErgodicController::SolveSingleIter(FourierCoefficient &distribution) {
-    // Linearize dynamics along the trajectory
-    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> A;
-    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> B;
-    LinearizeDynamics(trajectory_, A, B);
+  // Linearize dynamics along the trajectory
+  std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> A;
+  std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> B;
+  LinearizeDynamics(trajectory_, A, B);
 
-    /// Compute Descent direction
-    std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Z;  // State Descent direction
-    std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> U;  // Input Descent direction
-    DescentDirection(trajectory_, distribution, A, B, Z, U);
-    DescentTrajectory(trajectory_, Z, U);
+  /// Compute Descent direction
+  std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Z;  // State Descent direction
+  std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> U;  // Input Descent direction
+  DescentDirection(trajectory_, distribution, A, B, Z, U);
+  DescentTrajectory(trajectory_, Z, U);
 
-    /// TODO:  determine step size and descend
-    // 		step_size = get_step_size(tm.descender, em, tm, xd, ud, zd, vd, ad, bd, K, i)
+  /// TODO:  determine step size and descend
+  // 		step_size = get_step_size(tm.descender, em, tm, xd, ud, zd, vd, ad, bd, K, i)
 
-    /// TODO: Combine gradient descent
-    // 		# descend and project
-    // 		xd, ud = project(em, tm, K, xd, ud, zd, vd, step_size)
+  /// TODO: Combine gradient descent
+  // 		# descend and project
+  // 		xd, ud = project(em, tm, K, xd, ud, zd, vd, step_size)
 }
 
 void ErgodicController::DescentTrajectory(std::vector<State> &trajectory,
@@ -196,7 +196,7 @@ void ErgodicController::setInitialTrajectory() {
   double dt = 0.1;
   double T = 10.0;
   double radius = 3.0;
-  double omega = 10.0;
+  double omega = 0.5;
   trajectory_.clear();
   for (double t = 0.0; t < T; t += dt) {
     State state;
