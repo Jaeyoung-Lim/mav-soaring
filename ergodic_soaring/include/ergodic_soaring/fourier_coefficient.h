@@ -65,11 +65,24 @@ class FourierCoefficient {
   void setGridMap(grid_map::GridMap &grid_map) { grid_map_ = grid_map; };
   Eigen::ArrayXXd getCoefficients() { return coefficients_; };
   Eigen::ArrayXXd getNormalization() { return normalization_; };
-  Eigen::Matrix<double, 3, 1> getErgodicGradient(Eigen::ArrayXXd trajectory_coefficients);
+  double getErgodicity(Eigen::ArrayXXd trajectory_coefficients);
+  Eigen::Matrix<double, 3, 1> getErgodicGradient(State &state, Eigen::ArrayXXd trajectory_coefficients);
 
  private:
   inline double BasisFunction(const int k, const double length, const double x) {
     return std::cos(k * M_PI * x / length);
+  };
+
+  inline Eigen::Matrix<double, 3, 1> GradientBasisFunction(const int k1, const double length1, const double x1,
+                                                           const int k2, const double length2, const double x2) {
+    // Gradient Descent for SE(2)
+    Eigen::Matrix<double, 3, 1> gradient;
+    gradient(0) = -(M_PI / normalization_(k1, k2)) * (k1 / length1) * std::sin(k1 * M_PI * x1 / length1) *
+                  std::cos(k2 * M_PI * x2 / length2);
+    gradient(1) = -(M_PI / normalization_(k1, k2)) * (k2 / length2) * std::cos(k1 * M_PI * x1 / length1) *
+                  std::sin(k2 * M_PI * x2 / length2);
+    gradient(2) = 0.0;
+    return gradient;
   };
 
   grid_map::GridMap grid_map_;
