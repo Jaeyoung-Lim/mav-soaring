@@ -74,7 +74,7 @@ Eigen::Matrix<double, NUM_STATES, 1> ErgodicController::getCostGradient(State &s
   /// TODO: Ergodic gradient
   // FourierCoefficient trajectory_coefficients(20);
   Eigen::Matrix<double, NUM_STATES, 1> ergodic_gradient;
-  ergodic_gradient = distribution.getErgodicGradient(trajectory_distribution.getCoefficients());
+  ergodic_gradient = distribution.getErgodicGradient(state, trajectory_distribution.getCoefficients());
   // c_b * boundary_gradient
   gradient = ergodic_gradient;
   return gradient;
@@ -86,6 +86,7 @@ void ErgodicController::DescentDirection(std::vector<State> &trajectory, Fourier
                                          std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
                                          std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v) {
   FourierCoefficient trajectory_distribution(20);
+  trajectory_distribution.setGridMap(distribution.getGridMap());
   trajectory_distribution.FourierTransform(trajectory);  // Transform trajectory distribution after update
 
   // Cost function
@@ -93,7 +94,6 @@ void ErgodicController::DescentDirection(std::vector<State> &trajectory, Fourier
 
   // Solve gradient discent direction that minimizes the cost function
   const int N = trajectory.size();
-  const int dt = trajectory[0].dt;
   Eigen::Matrix<double, NUM_STATES, NUM_STATES> Q_D = Eigen::MatrixXd::Identity(NUM_STATES, NUM_STATES);
   Eigen::Matrix<double, NUM_INPUTS, NUM_INPUTS> R_D = Eigen::MatrixXd::Identity(NUM_INPUTS, NUM_INPUTS);
 
@@ -102,39 +102,61 @@ void ErgodicController::DescentDirection(std::vector<State> &trajectory, Fourier
   std::vector<Eigen::Matrix<double, NUM_STATES, 1>> a(N);
   std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> K(N);
   std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_INPUTS>> b(N);
+  std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_INPUTS>> gamma(N);
 
   // Calculate cost gradients
   for (size_t m = 0; m < N; m++) {
-    /// TODO: Populate a[n]
     a[m] = getCostGradient(trajectory[m], trajectory_distribution, distribution);
-    b[m] = dt * R * trajectory[m].input;
+    b[m] = trajectory[m].dt * R * trajectory[m].input;
+    // std::cout << " cost gradients " << m << std::endl;
+    // std::cout << " - cost gradient    a[" << m << "]: " << a[m].transpose() << std::endl;
+    // std::cout << " - control gradient b[" << m << "]: " << b[m].transpose() << std::endl;
   }
 
   P[N - 1] = Q_D;
   r[N - 1] = a[N - 1];  /// TODO: get cost gradient
 
   // Solve LQ Problem with backward pass
-  for (size_t n = N - 2; n > -1; n--) {
-    Eigen::Matrix<double, NUM_INPUTS, NUM_INPUTS> gamma_n = R_D + (B[n].transpose() * P[n + 1] * B[n]);
-    K[n] = gamma_n.inverse() * B[n].transpose() * P[n + 1] * A[n];
-    P[n] = Q_D + A[n].transpose() * P[n + 1] * A[n] - K[n].transpose() * gamma_n * K[n];
+  for (int n = N - 2; n > -1; n--) {
+    gamma[n] = R_D + (B[n].transpose() * P[n + 1] * B[n]);
+    K[n] = gamma[n].inverse() * B[n].transpose() * P[n + 1] * A[n];
+    P[n] = Q_D + A[n].transpose() * P[n + 1] * A[n] - K[n].transpose() * gamma[n] * K[n];
     r[n] = a[n] + (A[n].transpose() - K[n].transpose() * B[n].transpose()) * r[n + 1] - K[n + 1].transpose() * b[n];
   }
   // Get Descent direction with forward pass
+  z.resize(N);
+  v.resize(N);
+  for (size_t n = 0; n < N - 1; n++) {
+    if (n < 1) {
+      z[0] = Eigen::Matrix<double, NUM_STATES, 1>(trajectory[0].position(0), trajectory[0].position(1),
+                                                  trajectory[0].position(2));
+    }
+    v[n] = -K[n] * z[n] - 0.5 * gamma[n].inverse() * (b[n] + B[n].transpose() * r[n]);
+    z[n + 1] = A[n] * z[n] + B[n] * v[n];
+  }
+  std::cout << "Ergodicity: " << distribution.getErgodicity(trajectory_distribution.getCoefficients()) << std::endl;
 }
 
 bool ErgodicController::Solve(FourierCoefficient &distribution) {
   std::cout << "Starting to solve ergodic control!" << std::endl;
+
+  // Initial trajectory
   std::vector<State> trajectory;
   double dt = 0.1;
-  for (int i = 0; i < 10; i++) {
+  double T = 10.0;
+  double radius = 3.0;
+  double omega = 10.0;
+
+  for (double t = 0.0; t < T; t += dt) {
     State state;
+    state.position = Eigen::Vector3d(radius * std::cos(t * omega), radius * std::sin(t * omega), t * omega);
+    state.input = omega;
+    state.dt = dt;
     trajectory.push_back(state);
   }
-  /// TODO: Generate initial trajectory
 
   bool exit = false;
-  int max_iteration = 2;
+  int max_iteration = 100;
   int iter{0};
   while (!exit) {
     // Linearize dynamics along the trajectory
@@ -146,6 +168,7 @@ bool ErgodicController::Solve(FourierCoefficient &distribution) {
     std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Z;  // State Descent direction
     std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> U;  // Input Descent direction
     DescentDirection(trajectory, distribution, A, B, Z, U);
+    DescentTrajectory(trajectory, Z, U);
 
     /// TODO:  determine step size and descend
     // 		step_size = get_step_size(tm.descender, em, tm, xd, ud, zd, vd, ad, bd, K, i)
@@ -153,7 +176,8 @@ bool ErgodicController::Solve(FourierCoefficient &distribution) {
     /// TODO: Combine gradient descent
     // 		# descend and project
     // 		xd, ud = project(em, tm, K, xd, ud, zd, vd, step_size)
-    if (iter < max_iteration) {
+    std::cout << "Iteration: " << iter << std::endl;
+    if (iter > max_iteration) {
       exit = true;
     }
     iter++;
@@ -161,4 +185,16 @@ bool ErgodicController::Solve(FourierCoefficient &distribution) {
   // 	return xd, ud
 
   return true;
+}
+
+void ErgodicController::DescentTrajectory(std::vector<State> &trajectory,
+                                          std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
+                                          std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v) {
+  double gamma = 1.0;
+  for (size_t n = 0; n < trajectory.size(); n++) {
+    trajectory[n].position(0) = trajectory[n].position(0) + gamma * z[n](0);
+    trajectory[n].position(1) = trajectory[n].position(1) + gamma * z[n](1);
+    trajectory[n].position(2) = trajectory[n].position(2) + gamma * z[n](2);
+    trajectory[n].input = trajectory[n].input + gamma * v[n](0);
+  }
 }

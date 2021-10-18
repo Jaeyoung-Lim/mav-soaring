@@ -104,16 +104,36 @@ void FourierCoefficient::InverseFourierTransform(const std::string layer) {
   std::cout << "  - Sum of distribution: " << sum << std::endl;
 }
 
-Eigen::Matrix<double, 3, 1> FourierCoefficient::getErgodicGradient(Eigen::ArrayXXd trajectory_coefficients) {
-  int N = 100;
-
-  Eigen::Matrix<double, 3, 1> gradient;
+double FourierCoefficient::getErgodicity(Eigen::ArrayXXd trajectory_coefficients) {
+  double ergodicity{0.0};
+  // std::cout << "Start sum: " << std::endl;
   for (int i = 0; i < K_; i++) {
     for (int j = 0; j < K_; j++) {
       double sigma_k = 1 / std::pow(1 + std::pow(Eigen::Vector2d(i, j).norm(), 2), 1.5);
-      /// TODO: Implement derivative of F_k;
-      Eigen::Matrix<double, 3, 1> delta_F_k;
+      ergodicity += sigma_k * std::pow(trajectory_coefficients(i, j) - coefficients_(i, j), 2);
+    }
+  }
+  return ergodicity;
+}
+
+Eigen::Matrix<double, 3, 1> FourierCoefficient::getErgodicGradient(State &state,
+                                                                   Eigen::ArrayXXd trajectory_coefficients) {
+  int N = 10;
+  double L_1 = grid_map_.getLength()[0];
+  double L_2 = grid_map_.getLength()[1];
+
+  Eigen::Vector2d pos(state.position(0), state.position(1));
+  Eigen::Matrix<double, 3, 1> gradient = Eigen::Matrix<double, 3, 1>::Zero();
+  // std::cout << "Start sum: " << std::endl;
+  for (int i = 0; i < K_; i++) {
+    for (int j = 0; j < K_; j++) {
+      double sigma_k = 1 / std::pow(1 + std::pow(Eigen::Vector2d(i, j).norm(), 2), 1.5);
+      Eigen::Matrix<double, 3, 1> delta_F_k = GradientBasisFunction(i, L_1, pos(0), j, L_2, pos(1));
       gradient += (2 / N + 1) * sigma_k * (trajectory_coefficients(i, j) - coefficients_(i, j)) * delta_F_k;
+      // std::cout << "- delta_F_k: " << delta_F_k.transpose() << std::endl;
+      // std::cout << "- coefficients(i, j): " << coefficients_(i, j) << std::endl;
+      // std::cout << "- trajectory_coefficients(i, j): " << trajectory_coefficients(i, j) << std::endl;
+      // std::cout << "- gradient: " << gradient.transpose() << std::endl;
     }
   }
   return gradient;

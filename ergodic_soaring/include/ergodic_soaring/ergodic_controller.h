@@ -57,6 +57,8 @@ class ErgodicController {
                         std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v);
   Eigen::Matrix<double, NUM_STATES, 1> getCostGradient(State &state, FourierCoefficient &trajectory_distribution,
                                                        FourierCoefficient &distribution);
+  void DescentTrajectory(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
+                         std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v);
   std::shared_ptr<FourierCoefficient> distribution_coefficients;
 };
 
