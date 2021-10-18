@@ -41,7 +41,6 @@ void ErgodicController::LinearizeDynamics(
     std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B) {  // Dubins plane
   double v0 = 15.0;
   double dt = 0.1;
-  std::cout << "[LinearizeDynamics] trajectory size: " << trajectory.size() << std::endl;
 
   for (auto state : trajectory) {
     Eigen::Matrix<double, NUM_STATES, NUM_STATES> An;
@@ -139,43 +138,15 @@ void ErgodicController::DescentDirection(std::vector<State> &trajectory, Fourier
 
 bool ErgodicController::Solve(FourierCoefficient &distribution) {
   std::cout << "Starting to solve ergodic control!" << std::endl;
-
-  // Initial trajectory
-  std::vector<State> trajectory;
-  double dt = 0.1;
-  double T = 10.0;
-  double radius = 3.0;
-  double omega = 10.0;
-
-  for (double t = 0.0; t < T; t += dt) {
-    State state;
-    state.position = Eigen::Vector3d(radius * std::cos(t * omega), radius * std::sin(t * omega), t * omega);
-    state.input = omega;
-    state.dt = dt;
-    trajectory.push_back(state);
+  if (trajectory_.size() == 0) {
+    return false;
   }
-
   bool exit = false;
   int max_iteration = 100;
   int iter{0};
   while (!exit) {
-    // Linearize dynamics along the trajectory
-    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> A;
-    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> B;
-    LinearizeDynamics(trajectory, A, B);
+    SolveSingleIter(distribution);
 
-    /// Compute Descent direction
-    std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Z;  // State Descent direction
-    std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> U;  // Input Descent direction
-    DescentDirection(trajectory, distribution, A, B, Z, U);
-    DescentTrajectory(trajectory, Z, U);
-
-    /// TODO:  determine step size and descend
-    // 		step_size = get_step_size(tm.descender, em, tm, xd, ud, zd, vd, ad, bd, K, i)
-
-    /// TODO: Combine gradient descent
-    // 		# descend and project
-    // 		xd, ud = project(em, tm, K, xd, ud, zd, vd, step_size)
     std::cout << "Iteration: " << iter << std::endl;
     if (iter > max_iteration) {
       exit = true;
@@ -187,6 +158,26 @@ bool ErgodicController::Solve(FourierCoefficient &distribution) {
   return true;
 }
 
+bool ErgodicController::SolveSingleIter(FourierCoefficient &distribution) {
+    // Linearize dynamics along the trajectory
+    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> A;
+    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> B;
+    LinearizeDynamics(trajectory_, A, B);
+
+    /// Compute Descent direction
+    std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Z;  // State Descent direction
+    std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> U;  // Input Descent direction
+    DescentDirection(trajectory_, distribution, A, B, Z, U);
+    DescentTrajectory(trajectory_, Z, U);
+
+    /// TODO:  determine step size and descend
+    // 		step_size = get_step_size(tm.descender, em, tm, xd, ud, zd, vd, ad, bd, K, i)
+
+    /// TODO: Combine gradient descent
+    // 		# descend and project
+    // 		xd, ud = project(em, tm, K, xd, ud, zd, vd, step_size)
+}
+
 void ErgodicController::DescentTrajectory(std::vector<State> &trajectory,
                                           std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
                                           std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v) {
@@ -196,5 +187,22 @@ void ErgodicController::DescentTrajectory(std::vector<State> &trajectory,
     trajectory[n].position(1) = trajectory[n].position(1) + gamma * z[n](1);
     trajectory[n].position(2) = trajectory[n].position(2) + gamma * z[n](2);
     trajectory[n].input = trajectory[n].input + gamma * v[n](0);
+  }
+}
+
+void ErgodicController::setInitialTrajectory() {
+  // Initial trajectory
+  std::vector<State> trajectory;
+  double dt = 0.1;
+  double T = 10.0;
+  double radius = 3.0;
+  double omega = 10.0;
+  trajectory_.clear();
+  for (double t = 0.0; t < T; t += dt) {
+    State state;
+    state.position = Eigen::Vector3d(radius * std::cos(t * omega), radius * std::sin(t * omega), t * omega);
+    state.input = omega;
+    state.dt = dt;
+    trajectory_.push_back(state);
   }
 }
