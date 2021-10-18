@@ -103,14 +103,19 @@ int main(int argc, char **argv) {
   target_distribution.FourierTransform(grid_map_);
 
   // Create trajectory that matches the target distribution
-  ergodic_controller->Solve(target_distribution);
-
+  /// TODO: Add interface for single iteration visualization
+  ergodic_controller->setInitialTrajectory();
+  int iter{0};
   while (true) {
-    target_distribution.getGridMap().setTimestamp(ros::Time::now().toNSec());
-    grid_map_msgs::GridMap message;
-    grid_map::GridMapRosConverter::toMessage(target_distribution.getGridMap(), message);
-    grid_map_pub.publish(message);
-    ros::Duration(10.0).sleep();
+    ergodic_controller->SolveSingleIter(target_distribution);
+    if (iter % 10 == 0) {
+      target_distribution.getGridMap().setTimestamp(ros::Time::now().toNSec());
+      grid_map_msgs::GridMap message;
+      grid_map::GridMapRosConverter::toMessage(target_distribution.getGridMap(), message);
+      grid_map_pub.publish(message);
+    }
+    ros::Duration(1.0).sleep();
+    iter++;
   }
 
   ros::spin();

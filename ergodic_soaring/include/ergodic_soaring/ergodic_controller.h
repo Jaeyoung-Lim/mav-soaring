@@ -46,6 +46,8 @@ class ErgodicController {
   ErgodicController();
   virtual ~ErgodicController();
   bool Solve(FourierCoefficient &distribution);
+  bool SolveSingleIter(FourierCoefficient &distribution);
+  void setInitialTrajectory();
 
  private:
   void LinearizeDynamics(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
@@ -60,6 +62,7 @@ class ErgodicController {
   void DescentTrajectory(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
                          std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v);
   std::shared_ptr<FourierCoefficient> distribution_coefficients;
+  std::vector<State> trajectory_;
 };
 
 #endif
