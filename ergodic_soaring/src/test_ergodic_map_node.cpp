@@ -38,7 +38,6 @@
 
 void generateGaussianDistribution(grid_map::GridMap &grid_map) {
   double sum{0.0};
-  double v_c_{0.0};
   double cell_area = std::pow(grid_map.getResolution(), 2);
 
   grid_map::Matrix &layer_elevation = grid_map["distribution"];
@@ -57,7 +56,7 @@ void generateGaussianDistribution(grid_map::GridMap &grid_map) {
     sum += point_distribution;
     layer_elevation(gridMapIndex(0), gridMapIndex(1)) = point_distribution;
   }
-  v_c_ = 1 / sum;
+  double v_c_ = 1 / sum;
   double normailized_sum{0.0};
 
   for (grid_map::GridMapIterator iterator(grid_map); !iterator.isPastEnd(); ++iterator) {
