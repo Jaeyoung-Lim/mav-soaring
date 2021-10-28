@@ -63,7 +63,7 @@ void FourierCoefficient::FourierTransform(std::vector<State> trajectory) {
       for (auto state : trajectory) {
         Eigen::Vector3d pos = state.position;
         double F_k = (1 / h_k) * BasisFunction(i + 1, L_1, pos(0)) * BasisFunction(j + 1, L_2, pos(1));
-        phi_k += F_k * dt / T;
+        phi_k += (dt / T) * F_k;
       }
       coefficients_(i, j) = phi_k;
     }
