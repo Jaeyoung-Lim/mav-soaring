@@ -108,9 +108,9 @@ int main(int argc, char **argv) {
   Settings settings;
   settings.center_lat = 0.0;
   settings.center_lon = 0.0;
-  settings.resolution = 0.1;
-  settings.delta_easting = 10.0;
-  settings.delta_northing = 10.0;
+  settings.resolution = 1.0;
+  settings.delta_easting = 100.0;
+  settings.delta_northing = 100.0;
   grid_map_.setFrameId("world");
   grid_map_.setGeometry(grid_map::Length(settings.delta_easting, settings.delta_northing), settings.resolution,
                         grid_map::Position(settings.center_lat, settings.center_lon));
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
     std::vector<geometry_msgs::PoseStamped> trajectory_vector;
     for (auto state : traj) {
       trajectory_vector.insert(
-          trajectory_vector.begin(),
+          trajectory_vector.end(),
           vector3d2PoseStampedMsg(Eigen::Vector3d(state.position(0), state.position(1), 10.0), vehicle_attitude));
     }
 
