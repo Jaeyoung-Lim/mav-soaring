@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
   /// Generate circular trajectory as an example
   double T = 20.0;
   double radius = 3.0;
-  double omega = 10.0;
+  double omega = 5.0;
   double dt = 0.1;
   std::vector<State> trajectory;
 
