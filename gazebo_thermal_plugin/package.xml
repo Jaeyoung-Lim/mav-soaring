@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>gazebo_soaring_plugin</name>
+  <name>gazebo_thermal_plugin</name>
   <version>0.0.0</version>
   <description>Gazebo Plugins to enable soaring</description>
 

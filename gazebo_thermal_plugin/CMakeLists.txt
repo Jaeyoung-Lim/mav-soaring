@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(gazebo_soaring_plugin)
+project(gazebo_thermal_plugin)
 
 # # Check for c++11 / c++0x support
 # include(CheckCXXCompilerFlag)
@@ -23,7 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(gazebo REQUIRED)
 
 link_directories(${GAZEBO_LIBRARY_DIRS})
-include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
+include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
 
 catkin_package(
   DEPENDS
@@ -31,5 +31,5 @@ catkin_package(
     gazebo_ros
 )
 
-# add_library(${PROJECT_NAME} src/gazebo_thermal_plugin.cpp)
-# target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+add_library(${PROJECT_NAME} src/gazebo_thermal_plugin.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})

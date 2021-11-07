@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-#include "gazebo_thermal_plugin.h"
+#include "gazebo_thermal_plugin/gazebo_thermal_plugin.h"
 #include "common.h"
 
 namespace gazebo {
