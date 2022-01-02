@@ -60,7 +60,7 @@ class FourierCoefficient {
   virtual ~FourierCoefficient(){};
   grid_map::GridMap &getGridMap() { return grid_map_; };
   void FourierTransform(grid_map::GridMap &distribution_map);
-  void FourierTransform(std::vector<State> trajectory);
+  void FourierTransform(const std::vector<State> &trajectory);
   void InverseFourierTransform(const std::string layer);
   void setGridMap(grid_map::GridMap &grid_map) { grid_map_ = grid_map; };
   Eigen::ArrayXXd getCoefficients() { return coefficients_; };
