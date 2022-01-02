@@ -19,8 +19,7 @@ void FourierCoefficient::FourierTransform(grid_map::GridMap &distribution_map) {
         const grid_map::Index gridMapIndex = *iterator;
         Eigen::Vector2d cell_pos;
         distribution_map.getPosition(gridMapIndex, cell_pos);
-        h_k_sum +=
-            std::pow(BasisFunction(i + 1, L_1, cell_pos(0)), 2) * std::pow(BasisFunction(j + 1, L_2, cell_pos(1)), 2);
+        h_k_sum += std::pow(BasisFunction(i, L_1, cell_pos(0)), 2) * std::pow(BasisFunction(j, L_2, cell_pos(1)), 2);
       }
       double h_k = std::sqrt(h_k_sum);
       normalization_(i, j) = h_k;
@@ -31,7 +30,7 @@ void FourierCoefficient::FourierTransform(grid_map::GridMap &distribution_map) {
         const grid_map::Index gridMapIndex = *iterator;
         Eigen::Vector3d cell_pos;
         distribution_map.getPosition3("distribution", gridMapIndex, cell_pos);
-        double F_k = (1 / h_k) * BasisFunction(i + 1, L_1, cell_pos(0)) * BasisFunction(j + 1, L_2, cell_pos(1));
+        double F_k = (1 / h_k) * BasisFunction(i, L_1, cell_pos(0)) * BasisFunction(j, L_2, cell_pos(1));
         phi_k += cell_pos(2) * F_k;
       }
       coefficients_(i, j) = phi_k;
@@ -39,9 +38,8 @@ void FourierCoefficient::FourierTransform(grid_map::GridMap &distribution_map) {
   }
 }
 
-void FourierCoefficient::FourierTransform(std::vector<State> trajectory) {
-  double dt = 0.1;
-  double T = trajectory.size() * dt;
+void FourierCoefficient::FourierTransform(const std::vector<State> &trajectory) {
+  double N = trajectory.size();
   double L_1 = grid_map_.getLength()[0];
   double L_2 = grid_map_.getLength()[1];
   double cell_area = std::pow(grid_map_.getResolution(), 2);
@@ -54,7 +52,7 @@ void FourierCoefficient::FourierTransform(std::vector<State> trajectory) {
       double h_k_sum{0.0};  // fourier coefficients
       for (auto state : trajectory) {
         Eigen::Vector3d pos = state.position;
-        h_k_sum += std::pow(BasisFunction(i + 1, L_1, pos(0)), 2) * std::pow(BasisFunction(j + 1, L_2, pos(1)), 2);
+        h_k_sum += std::pow(BasisFunction(i, L_1, pos(0)), 2) * std::pow(BasisFunction(j, L_2, pos(1)), 2);
       }
       double h_k = std::sqrt(h_k_sum);
       normalization_(i, j) = h_k;
@@ -62,10 +60,12 @@ void FourierCoefficient::FourierTransform(std::vector<State> trajectory) {
       double phi_k{0.0};  // fourier coefficients
       for (auto state : trajectory) {
         Eigen::Vector3d pos = state.position;
-        double F_k = (1 / h_k) * BasisFunction(i + 1, L_1, pos(0)) * BasisFunction(j + 1, L_2, pos(1));
-        phi_k += (dt / T) * F_k;
+        double F_k = (1 / h_k) * BasisFunction(i, L_1, pos(0)) * BasisFunction(j, L_2, pos(1));
+        phi_k += F_k;
       }
-      coefficients_(i, j) = phi_k;
+      // Since we are reconstructing the distribution with a discretized cell, we need to normalize the fourier
+      // coefficients accordingly
+      coefficients_(i, j) = phi_k * cell_area / (L_1 * L_2);
     }
   }
 }
@@ -74,7 +74,6 @@ void FourierCoefficient::InverseFourierTransform(const std::string layer) {
   double L_1 = grid_map_.getLength()[0];
   double L_2 = grid_map_.getLength()[1];
 
-  double cell_area = std::pow(grid_map_.getResolution(), 2);
   grid_map_.add(layer);
 
   Eigen::MatrixXf &layer_reconstruction = grid_map_[layer];
@@ -88,8 +87,8 @@ void FourierCoefficient::InverseFourierTransform(const std::string layer) {
     for (size_t i = 0; i < K_; i++) {
       for (size_t j = 0; j < K_; j++) {
         double h_k = normalization_(i, j);
-        phi += coefficients_(i, j) * (1 / h_k) * BasisFunction(i + 1, L_1, cell_pos(0)) *
-               BasisFunction(j + 1, L_2, cell_pos(1));
+        phi +=
+            coefficients_(i, j) * (1 / h_k) * BasisFunction(i, L_1, cell_pos(0)) * BasisFunction(j, L_2, cell_pos(1));
       }
     }
     layer_reconstruction(gridMapIndex(0), gridMapIndex(1)) = phi;

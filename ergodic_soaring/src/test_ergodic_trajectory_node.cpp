@@ -33,8 +33,25 @@
 
 #include "ergodic_soaring/fourier_coefficient.h"
 
+#include <nav_msgs/Path.h>
 #include <ros/ros.h>
+
 #include <grid_map_ros/GridMapRosConverter.hpp>
+
+geometry_msgs::PoseStamped vector3d2PoseStampedMsg(const Eigen::Vector3d position, const Eigen::Vector4d orientation) {
+  geometry_msgs::PoseStamped encode_msg;
+
+  encode_msg.header.stamp = ros::Time::now();
+  encode_msg.header.frame_id = "map";
+  encode_msg.pose.orientation.w = orientation(0);
+  encode_msg.pose.orientation.x = orientation(1);
+  encode_msg.pose.orientation.y = orientation(2);
+  encode_msg.pose.orientation.z = orientation(3);
+  encode_msg.pose.position.x = position(0);
+  encode_msg.pose.position.y = position(1);
+  encode_msg.pose.position.z = position(2);
+  return encode_msg;
+}
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "test_ergodic_map");
@@ -42,30 +59,26 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh_private("~");
 
   ros::Publisher grid_map_pub = nh.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
+  ros::Publisher trajectory_pub_ = nh.advertise<nav_msgs::Path>("path", 10);
 
   grid_map::GridMap grid_map_ = grid_map::GridMap({"distribution"});
 
   // Set Gridmap properties
-  Settings settings;
-  settings.center_lat = 0.0;
-  settings.center_lon = 0.0;
-  settings.resolution = 0.1;
-  settings.delta_easting = 10.0;
-  settings.delta_northing = 10.0;
   grid_map_.setFrameId("world");
-  grid_map_.setGeometry(grid_map::Length(settings.delta_easting, settings.delta_northing), settings.resolution,
-                        grid_map::Position(settings.center_lat, settings.center_lon));
+  double resolution = 0.1;
+  grid_map_.setGeometry(grid_map::Length(10.0, 10.0), resolution, grid_map::Position(5.0, 5.0));
 
   /// Generate circular trajectory as an example
-  double T = 20.0;
+  double T = 40.0;
   double radius = 3.0;
-  double omega = 5.0;
+  double omega = 2 * M_PI / (4 * T);
   double dt = 0.1;
   std::vector<State> trajectory;
 
   for (double t = 0.0; t < T; t += dt) {
     State state;
-    state.position = Eigen::Vector3d(radius * std::cos(t * omega), radius * std::sin(t * omega), t * omega);
+    state.position = Eigen::Vector3d(radius * std::cos(t * omega) + 5.0, radius * std::sin(t * omega) + 5.0, 0.0);
+    state.dt = dt;
     trajectory.push_back(state);
   }
 
@@ -76,6 +89,20 @@ int main(int argc, char** argv) {
   fourier_coefficient->InverseFourierTransform("distribution");
 
   while (true) {
+    std::vector<geometry_msgs::PoseStamped> trajectory_vector;
+    Eigen::Vector4d vehicle_attitude(1.0, 0.0, 0.0, 0.0);
+    for (auto state : trajectory) {
+      trajectory_vector.insert(
+          trajectory_vector.end(),
+          vector3d2PoseStampedMsg(Eigen::Vector3d(state.position(0), state.position(1), 2.0), vehicle_attitude));
+    }
+
+    nav_msgs::Path msg;
+    msg.header.stamp = ros::Time::now();
+    msg.header.frame_id = "world";
+    msg.poses = trajectory_vector;
+    trajectory_pub_.publish(msg);
+
     fourier_coefficient->getGridMap().setTimestamp(ros::Time::now().toNSec());
     grid_map_msgs::GridMap message;
     grid_map::GridMapRosConverter::toMessage(fourier_coefficient->getGridMap(), message);
