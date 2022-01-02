@@ -46,7 +46,7 @@ class ErgodicController {
   ErgodicController();
   virtual ~ErgodicController();
   bool Solve(FourierCoefficient &distribution);
-  bool SolveSingleIter(FourierCoefficient &distribution);
+  void SolveSingleIter(FourierCoefficient &distribution);
   void setInitialTrajectory();
   std::vector<State> getTrajectory() { return trajectory_; };
 

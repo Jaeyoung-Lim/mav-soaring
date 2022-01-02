@@ -65,8 +65,8 @@ void generateGaussianDistribution(grid_map::GridMap &grid_map) {
     grid_map::Position cell_pos;
     grid_map.getPosition(gridMapIndex, cell_pos);
 
-    double sigma = 5.0;
-    grid_map::Position mean = Eigen::Vector2d::Zero();
+    double sigma = 10.0;
+    grid_map::Position mean = grid_map.getPosition();
     Eigen::Matrix2d variance = sigma * Eigen::Matrix2d::Identity();
     Eigen::Vector2d error_pos = cell_pos - mean;
     double point_distribution = 1 / (std::sqrt(std::pow(2 * M_PI, 2) * variance.norm())) *
@@ -105,15 +105,9 @@ int main(int argc, char **argv) {
   grid_map::GridMap grid_map_ = grid_map::GridMap({"distribution"});
 
   // Set Gridmap properties
-  Settings settings;
-  settings.center_lat = 0.0;
-  settings.center_lon = 0.0;
-  settings.resolution = 1.0;
-  settings.delta_easting = 100.0;
-  settings.delta_northing = 100.0;
   grid_map_.setFrameId("world");
-  grid_map_.setGeometry(grid_map::Length(settings.delta_easting, settings.delta_northing), settings.resolution,
-                        grid_map::Position(settings.center_lat, settings.center_lon));
+  double resolution = 1.0;
+  grid_map_.setGeometry(grid_map::Length(100.0, 100.0), resolution, grid_map::Position(50.0, 50.0));
 
   generateGaussianDistribution(grid_map_);
 

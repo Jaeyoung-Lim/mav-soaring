@@ -59,9 +59,9 @@ State ErgodicController::Dynamics(const State &state,
                                   const Eigen::Matrix<double, NUM_INPUTS, 1> &input) {  // Dubins plane
   Eigen::Vector3d velocity;
 
-  double speed = 15.0;
+  double speed = 5.0;
   double dt = state.dt;
-  double max_input = 2.0;
+  double max_input = 0.5;
 
   velocity(0) = speed * std::cos(state.position(2));
   velocity(1) = speed * std::sin(state.position(2));
@@ -175,7 +175,7 @@ bool ErgodicController::Solve(FourierCoefficient &distribution) {
   return true;
 }
 
-bool ErgodicController::SolveSingleIter(FourierCoefficient &distribution) {
+void ErgodicController::SolveSingleIter(FourierCoefficient &distribution) {
   // Linearize dynamics along the trajectory
   std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> A;
   std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> B;
@@ -213,9 +213,11 @@ void ErgodicController::setInitialTrajectory() {
   double radius = 3.0;
   double omega = 0.5;
   trajectory_.clear();
+  Eigen::Vector3d initial_position = Eigen::Vector3d(50.0, 50.0, 0.0);
   for (double t = 0.0; t < T; t += dt) {
     State state;
-    state.position = Eigen::Vector3d(radius * std::cos(t * omega), radius * std::sin(t * omega), t * omega);
+    state.position =
+        Eigen::Vector3d(radius * std::cos(t * omega), radius * std::sin(t * omega), omega) + initial_position;
     state.input = omega;
     state.dt = dt;
     trajectory_.push_back(state);
