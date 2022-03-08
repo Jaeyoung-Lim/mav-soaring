@@ -86,8 +86,8 @@ Eigen::Matrix<double, NUM_STATES, 1> ErgodicController::getCostGradient(const in
                                                                         FourierCoefficient &distribution) {
   Eigen::Matrix<double, NUM_STATES, 1> gradient;
   /// TODO: Tune Boundary from map
-  double c_b = 0.001;  // Boundary barrier weight
-  double q = 10000.0;    // Ergodicity weight
+  double c_b = 0.000001;  // Boundary barrier weight
+  double q = 1.0;    // Ergodicity weight
 
   double max_boundary = 100;
   double min_boundary = 0;
@@ -192,11 +192,21 @@ void ErgodicController::SolveSingleIter(FourierCoefficient &distribution, int i)
   DescentDirection(trajectory_, distribution, A, B, Z, U, K);
 
   // Update trajectory with gradient descent direction
-  double gamma_0 = 1.0;
+  double gamma_0 = 0.1;
   double gamma = gamma_0 / std::sqrt(i);
   std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Alpha = Z;  // State Descent direction
   std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> Mu = U;     // Input Descent direction
   DescentTrajectory(trajectory_, Alpha, Mu, Z, U, gamma);
+  preprojected_trajectory_.clear();
+  for (size_t k=0; k < trajectory_.size(); k++) {
+    State state;
+    state.position(0) = Alpha[k](0);
+    state.position(1) = Alpha[k](1);
+    state.position(2) = Alpha[k](2);
+    state.input = Mu[k](0);
+    // std::cout << k << ": " << Alpha[k](0) << std::endl;
+    preprojected_trajectory_.push_back(state);
+  }
 
   ProjectionOperator(trajectory_, Alpha, Mu, K);
 }
@@ -209,7 +219,7 @@ void ErgodicController::DescentTrajectory(const std::vector<State> &trajectory,
   for (size_t n = 0; n < trajectory.size(); n++) {
     alpha[n](0) = trajectory[n].position(0) + gamma * z[n](0);
     alpha[n](1) = trajectory[n].position(1) + gamma * z[n](1);
-    alpha[n](2) = trajectory[n].position(2) + gamma * z[n](2);
+    alpha[n](2) = trajectory[n].position(2) + 0.0 * z[n](2);
     mu[n](0) = trajectory[n].input + gamma * v[n](0);
   }
 }
@@ -243,6 +253,8 @@ std::vector<State> ErgodicController::ProjectionOperator(
   double min_u = -2.0;
   for (size_t n = 0; n < N - 1; n++) {
     Eigen::Matrix<double, NUM_INPUTS, 1> u_n = mu[n] + K[n] * (alpha[n] - trajectory[n].position);
+    // std::cout <<"  mu[" << n << "]: " << mu[n].transpose() << std::endl;
+    // std::cout <<"  alpha[" << n << "]: " << alpha[n].transpose() << "  trajectory[" << n << "]: " <<  trajectory[n].position.transpose() << std::endl;
     u_n(0) = std::min(std::max(u_n(0), min_u), max_u);
     trajectory[n + 1] = Dynamics(trajectory[n], u_n);
   }

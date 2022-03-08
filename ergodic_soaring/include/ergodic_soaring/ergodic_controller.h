@@ -49,6 +49,7 @@ class ErgodicController {
   void SolveSingleIter(FourierCoefficient &distribution, int i);
   void setInitialTrajectory();
   std::vector<State> getTrajectory() { return trajectory_; };
+  std::vector<State> getPreprojectedTrajectory() { return preprojected_trajectory_; };
 
  private:
   State Dynamics(const State &state, const Eigen::Matrix<double, NUM_INPUTS, 1> &input);
@@ -74,6 +75,7 @@ class ErgodicController {
                                         std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K);
   std::shared_ptr<FourierCoefficient> distribution_coefficients;
   std::vector<State> trajectory_;
+  std::vector<State> preprojected_trajectory_;
   double cruise_speed_{15.0};
 };
 
