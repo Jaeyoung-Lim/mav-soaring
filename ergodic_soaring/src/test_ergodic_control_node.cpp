@@ -57,20 +57,21 @@ void generateGaussianDistribution(grid_map::GridMap &grid_map) {
   double sum{0.0};
   double v_c_{0.0};
   double cell_area = std::pow(grid_map.getResolution(), 2);
-
+  grid_map.add("visualization");
   grid_map::Matrix &layer_elevation = grid_map["distribution"];
+  Eigen::MatrixXf &layer_visual = grid_map["visualization"];
 
   for (grid_map::GridMapIterator iterator(grid_map); !iterator.isPastEnd(); ++iterator) {
     const grid_map::Index gridMapIndex = *iterator;
     grid_map::Position cell_pos;
     grid_map.getPosition(gridMapIndex, cell_pos);
 
-    double sigma = 10.0;
+    double sigma = 100.0;
     grid_map::Position mean = grid_map.getPosition();
     Eigen::Matrix2d variance = sigma * Eigen::Matrix2d::Identity();
     Eigen::Vector2d error_pos = cell_pos - mean;
     double point_distribution = 1 / (std::sqrt(std::pow(2 * M_PI, 2) * variance.norm())) *
-                                std::exp(-0.5 * error_pos.transpose() * variance * error_pos);
+                                std::exp(-0.5 * error_pos.transpose() * variance.inverse() * error_pos);
     sum += point_distribution;
     layer_elevation(gridMapIndex(0), gridMapIndex(1)) = point_distribution;
   }
@@ -80,6 +81,7 @@ void generateGaussianDistribution(grid_map::GridMap &grid_map) {
   for (grid_map::GridMapIterator iterator(grid_map); !iterator.isPastEnd(); ++iterator) {
     const grid_map::Index gridMapIndex = *iterator;
     layer_elevation(gridMapIndex(0), gridMapIndex(1)) = layer_elevation(gridMapIndex(0), gridMapIndex(1)) * v_c_;
+    layer_visual(gridMapIndex(0), gridMapIndex(1)) = 100.0 * layer_elevation(gridMapIndex(0), gridMapIndex(1));
     normailized_sum += layer_elevation(gridMapIndex(0), gridMapIndex(1));
   }
   std::cout << std::endl;
@@ -95,11 +97,14 @@ int main(int argc, char **argv) {
   ros::NodeHandle nh_private("~");
 
   ros::Publisher grid_map_pub = nh.advertise<grid_map_msgs::GridMap>("grid_map", 1, true);
+  ros::Publisher traj_map_pub = nh.advertise<grid_map_msgs::GridMap>("trajectory_distribution", 1, true);
   ros::Publisher trajectory_pub_ = nh.advertise<nav_msgs::Path>("path", 10);
 
   std::shared_ptr<ErgodicController> ergodic_controller = std::make_shared<ErgodicController>();
   // Fourier coefficients of the distribution
-  FourierCoefficient target_distribution = FourierCoefficient(20);
+  FourierCoefficient target_distribution = FourierCoefficient(40);
+
+  FourierCoefficient trajectory_distribution = FourierCoefficient(40);
 
   // Generate Target distribution
   grid_map::GridMap grid_map_ = grid_map::GridMap({"distribution"});
@@ -112,14 +117,17 @@ int main(int argc, char **argv) {
   generateGaussianDistribution(grid_map_);
 
   target_distribution.FourierTransform(grid_map_);
+  target_distribution.InverseFourierTransform("reconstruction");
+  trajectory_distribution.setGridMap(grid_map_);
 
   // Create trajectory that matches the target distribution
   /// TODO: Add interface for single iteration visualization
   ergodic_controller->setInitialTrajectory();
-  int iter{0};
+  int iter{1};
+  int max_iterations{100};
 
   while (true) {
-    ergodic_controller->SolveSingleIter(target_distribution);
+    ergodic_controller->SolveSingleIter(target_distribution, iter);
     std::vector<State> traj = ergodic_controller->getTrajectory();
     Eigen::Vector4d vehicle_attitude(1.0, 0.0, 0.0, 0.0);
     std::vector<geometry_msgs::PoseStamped> trajectory_vector;
@@ -135,13 +143,22 @@ int main(int argc, char **argv) {
     msg.poses = trajectory_vector;
     trajectory_pub_.publish(msg);
 
-    if (iter % 10 == 0) {
+    trajectory_distribution.FourierTransform(traj);
+    trajectory_distribution.InverseFourierTransform("distribution");
+    trajectory_distribution.getGridMap().setTimestamp(ros::Time::now().toNSec());
+    grid_map_msgs::GridMap message2;
+    grid_map::GridMapRosConverter::toMessage(trajectory_distribution.getGridMap(), message2);
+    traj_map_pub.publish(message2);
+
+    if (iter % 1 == 0) {
       target_distribution.getGridMap().setTimestamp(ros::Time::now().toNSec());
       grid_map_msgs::GridMap message;
       grid_map::GridMapRosConverter::toMessage(target_distribution.getGridMap(), message);
       grid_map_pub.publish(message);
     }
-    ros::Duration(1.0).sleep();
+
+    if (iter > max_iterations) break;
+    // ros::Duration(1.0).sleep();
     iter++;
   }
 
