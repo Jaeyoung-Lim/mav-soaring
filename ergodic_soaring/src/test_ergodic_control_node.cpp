@@ -103,9 +103,9 @@ int main(int argc, char **argv) {
 
   std::shared_ptr<ErgodicController> ergodic_controller = std::make_shared<ErgodicController>();
   // Fourier coefficients of the distribution
-  FourierCoefficient target_distribution = FourierCoefficient(40);
+  FourierCoefficient target_distribution = FourierCoefficient(20);
 
-  FourierCoefficient trajectory_distribution = FourierCoefficient(40);
+  FourierCoefficient trajectory_distribution = FourierCoefficient(20);
 
   // Generate Target distribution
   grid_map::GridMap grid_map_ = grid_map::GridMap({"distribution"});
@@ -146,7 +146,6 @@ int main(int argc, char **argv) {
 
     std::vector<State> traj2 = ergodic_controller->getPreprojectedTrajectory();
     std::vector<geometry_msgs::PoseStamped> trajectory_vector2;
-    std::cout << "size traj2: " << traj2.size() << std::endl;
     for (auto state : traj2) {
       trajectory_vector2.insert(
           trajectory_vector2.end(),
@@ -174,7 +173,7 @@ int main(int argc, char **argv) {
     }
 
     if (iter > max_iterations) break;
-    // ros::Duration(1.0).sleep();
+    ros::Duration(1.0).sleep();
     iter++;
   }
 

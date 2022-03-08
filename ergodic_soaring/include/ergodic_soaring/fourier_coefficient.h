@@ -65,6 +65,7 @@ class FourierCoefficient {
   void setGridMap(grid_map::GridMap &grid_map) { grid_map_ = grid_map; };
   Eigen::ArrayXXd getCoefficients() { return coefficients_; };
   Eigen::ArrayXXd getNormalization() { return normalization_; };
+  int getNumberOfCoefficients() const { return K_; };
   double getErgodicity(Eigen::ArrayXXd trajectory_coefficients);
   Eigen::Matrix<double, 3, 1> getErgodicGradient(const int N, const State &state,
                                                  Eigen::ArrayXXd trajectory_coefficients);
