@@ -88,7 +88,7 @@ State ErgodicController::Dynamics(const State &state,
   } else {
     /// TODO: Check if this is correct
     next_position(0) = current_position(0) + (cruise_speed_ / input(0)) * (std::sin(next_yaw) - std::sin(yaw));
-    next_position(1) = current_position(1) + (cruise_speed_ / input(0)) * (std::cos(next_yaw) - std::cos(yaw));
+    next_position(1) = current_position(1) + (cruise_speed_ / input(0)) * (-std::cos(next_yaw) + std::cos(yaw));
   }
   next_position(2) = next_yaw;
 
