@@ -86,8 +86,8 @@ Eigen::Matrix<double, NUM_STATES, 1> ErgodicController::getCostGradient(const in
                                                                         FourierCoefficient &distribution) {
   Eigen::Matrix<double, NUM_STATES, 1> gradient;
   /// TODO: Tune Boundary from map
-  double c_b = 1.0;  // Boundary barrier weight
-  double q = 1.0;    // Ergodicity weight
+  double c_b = 0.001;  // Boundary barrier weight
+  double q = 10000.0;    // Ergodicity weight
 
   double max_boundary = 100;
   double min_boundary = 0;
@@ -101,6 +101,7 @@ Eigen::Matrix<double, NUM_STATES, 1> ErgodicController::getCostGradient(const in
   ergodic_gradient = distribution.getErgodicGradient(N, state, trajectory_distribution.getCoefficients());
   // std::cout << "   - ergodic_gradient: " << ergodic_gradient.transpose() << std::endl;
   gradient = q * ergodic_gradient + c_b * boundary_gradient;
+  // std::cout << "ergodic_gradient: " << ergodic_gradient.transpose() << " boundary_gradient: " << boundary_gradient.transpose() << std::endl;
   return gradient;
 }
 
