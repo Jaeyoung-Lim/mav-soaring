@@ -75,6 +75,7 @@ class ErgodicController {
                                         std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K);
   std::shared_ptr<FourierCoefficient> distribution_coefficients;
   std::vector<State> trajectory_;
+  std::vector<State> last_trajectory_;
   std::vector<State> preprojected_trajectory_;
   double cruise_speed_{15.0};
 };

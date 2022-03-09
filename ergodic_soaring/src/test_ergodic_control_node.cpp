@@ -103,9 +103,9 @@ int main(int argc, char **argv) {
 
   std::shared_ptr<ErgodicController> ergodic_controller = std::make_shared<ErgodicController>();
   // Fourier coefficients of the distribution
-  FourierCoefficient target_distribution = FourierCoefficient(20);
+  FourierCoefficient target_distribution = FourierCoefficient(40);
 
-  FourierCoefficient trajectory_distribution = FourierCoefficient(20);
+  FourierCoefficient trajectory_distribution = FourierCoefficient(40);
 
   // Generate Target distribution
   grid_map::GridMap grid_map_ = grid_map::GridMap({"distribution"});
@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
     }
 
     if (iter > max_iterations) break;
-    ros::Duration(1.0).sleep();
+    // ros::Duration(1.0).sleep();
     iter++;
   }
 

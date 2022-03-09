@@ -45,12 +45,15 @@ void ErgodicController::setInitialTrajectory() {
   omega << 1.0;
   trajectory_.clear();
   State initial_state;
-  initial_state.position = Eigen::Vector3d(50.0, 50.0, 0.0);
+  initial_state.position = Eigen::Vector3d(20.0, 20.0, 0.0);
   initial_state.input = omega(0);
   initial_state.dt = dt;
   trajectory_.push_back(initial_state);
-  for (double t = 0.0; t < T; t += dt) {
+  for (double t = 0.0; t < 0.5 * T; t += dt) {
     trajectory_.push_back(Dynamics(trajectory_.back(), omega));
+  }
+  for (double t = 0.5 * T; t < T; t += dt) {
+    trajectory_.push_back(Dynamics(trajectory_.back(), -omega));
   }
 }
 
@@ -225,7 +228,7 @@ void ErgodicController::SolveSingleIter(FourierCoefficient &distribution, int i)
     state.input = Mu[k](0);
     preprojected_trajectory_.push_back(state);
   }
-
+  last_trajectory_ = trajectory_;
   ProjectionOperator(trajectory_, Alpha, Mu, K);
 }
 
