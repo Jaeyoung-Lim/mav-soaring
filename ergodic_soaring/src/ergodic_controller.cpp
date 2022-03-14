@@ -214,11 +214,13 @@ void ErgodicController::SolveSingleIter(FourierCoefficient &distribution, int i)
   DescentDirection(trajectory_, distribution, A, B, Z, U, K);
 
   // Update trajectory with gradient descent direction
-  double gamma_0 = 0.1;
-  double gamma = gamma_0 * std::pow(0.5, i);
+  double gamma_0 = 1.0;
+  // double gamma = gamma_0 * std::pow(0.5, i);
+  double gamma = gamma_0;
   std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Alpha = Z;  // State Descent direction
   std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> Mu = U;     // Input Descent direction
   DescentTrajectory(trajectory_, Alpha, Mu, Z, U, gamma);
+  ///TODO: Why is the last trajectory and the preprojected trajectory the same?
   preprojected_trajectory_.clear();
   for (size_t k = 0; k < trajectory_.size(); k++) {
     State state;
@@ -245,7 +247,7 @@ void ErgodicController::DescentTrajectory(const std::vector<State> &trajectory,
   }
 }
 
-std::vector<State> ErgodicController::ProjectionOperator(
+void ErgodicController::ProjectionOperator(
     std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &alpha,
     std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &mu,
     std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K) {
@@ -262,5 +264,4 @@ std::vector<State> ErgodicController::ProjectionOperator(
     u_n(0) = std::min(std::max(u_n(0), min_u), max_u);
     trajectory[n + 1] = Dynamics(trajectory[n], u_n);
   }
-  return projected_trajectory;
 }

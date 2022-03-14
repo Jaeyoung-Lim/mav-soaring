@@ -53,6 +53,22 @@ geometry_msgs::PoseStamped vector3d2PoseStampedMsg(const Eigen::Vector3d positio
   return encode_msg;
 }
 
+void PublishTrajectory(ros::Publisher& pub, std::vector<State> trajectory) {
+    Eigen::Vector4d vehicle_attitude(1.0, 0.0, 0.0, 0.0);
+    std::vector<geometry_msgs::PoseStamped> trajectory_vector;
+    for (auto state : trajectory) {
+      trajectory_vector.insert(
+          trajectory_vector.end(),
+          vector3d2PoseStampedMsg(Eigen::Vector3d(state.position(0), state.position(1), 10.0), vehicle_attitude));
+    }
+
+    nav_msgs::Path msg;
+    msg.header.stamp = ros::Time::now();
+    msg.header.frame_id = "world";
+    msg.poses = trajectory_vector;
+    pub.publish(msg);
+}
+
 void generateGaussianDistribution(grid_map::GridMap &grid_map) {
   double sum{0.0};
   double v_c_{0.0};
@@ -100,12 +116,13 @@ int main(int argc, char **argv) {
   ros::Publisher traj_map_pub = nh.advertise<grid_map_msgs::GridMap>("trajectory_distribution", 1, true);
   ros::Publisher trajectory_pub_ = nh.advertise<nav_msgs::Path>("path", 10);
   ros::Publisher trajectory_pub2_ = nh.advertise<nav_msgs::Path>("preprojected_path", 10);
+  ros::Publisher trajectory_pub3_ = nh.advertise<nav_msgs::Path>("last_path", 10);
 
   std::shared_ptr<ErgodicController> ergodic_controller = std::make_shared<ErgodicController>();
   // Fourier coefficients of the distribution
-  FourierCoefficient target_distribution = FourierCoefficient(40);
+  FourierCoefficient target_distribution = FourierCoefficient(20);
 
-  FourierCoefficient trajectory_distribution = FourierCoefficient(40);
+  FourierCoefficient trajectory_distribution = FourierCoefficient(20);
 
   // Generate Target distribution
   grid_map::GridMap grid_map_ = grid_map::GridMap({"distribution"});
@@ -130,33 +147,13 @@ int main(int argc, char **argv) {
   while (true) {
     ergodic_controller->SolveSingleIter(target_distribution, iter);
     std::vector<State> traj = ergodic_controller->getTrajectory();
-    Eigen::Vector4d vehicle_attitude(1.0, 0.0, 0.0, 0.0);
-    std::vector<geometry_msgs::PoseStamped> trajectory_vector;
-    for (auto state : traj) {
-      trajectory_vector.insert(
-          trajectory_vector.end(),
-          vector3d2PoseStampedMsg(Eigen::Vector3d(state.position(0), state.position(1), 10.0), vehicle_attitude));
-    }
-
-    nav_msgs::Path msg;
-    msg.header.stamp = ros::Time::now();
-    msg.header.frame_id = "world";
-    msg.poses = trajectory_vector;
-    trajectory_pub_.publish(msg);
+    PublishTrajectory(trajectory_pub_, traj);
 
     std::vector<State> traj2 = ergodic_controller->getPreprojectedTrajectory();
-    std::vector<geometry_msgs::PoseStamped> trajectory_vector2;
-    for (auto state : traj2) {
-      trajectory_vector2.insert(
-          trajectory_vector2.end(),
-          vector3d2PoseStampedMsg(Eigen::Vector3d(state.position(0), state.position(1), 10.0), vehicle_attitude));
-    }
+    PublishTrajectory(trajectory_pub2_, traj2);
 
-    nav_msgs::Path msg2;
-    msg2.header.stamp = ros::Time::now();
-    msg2.header.frame_id = "world";
-    msg2.poses = trajectory_vector2;
-    trajectory_pub2_.publish(msg2);
+    std::vector<State> traj3 = ergodic_controller->getLastTrajectory();
+    PublishTrajectory(trajectory_pub3_, traj3);
 
     trajectory_distribution.FourierTransform(traj);
     trajectory_distribution.InverseFourierTransform("distribution");
@@ -173,7 +170,7 @@ int main(int argc, char **argv) {
     }
 
     if (iter > max_iterations) break;
-    // ros::Duration(1.0).sleep();
+    ros::Duration(1.0).sleep();
     iter++;
   }
 

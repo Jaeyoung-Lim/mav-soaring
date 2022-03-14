@@ -50,6 +50,7 @@ class ErgodicController {
   void setInitialTrajectory();
   std::vector<State> getTrajectory() { return trajectory_; };
   std::vector<State> getPreprojectedTrajectory() { return preprojected_trajectory_; };
+  std::vector<State> getLastTrajectory() { return last_trajectory_; };
 
  private:
   State Dynamics(const State &state, const Eigen::Matrix<double, NUM_INPUTS, 1> &input);
@@ -69,7 +70,7 @@ class ErgodicController {
                          std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &mu,
                          std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
                          std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v, const double gamma);
-  std::vector<State> ProjectionOperator(std::vector<State> &trajectory,
+  void ProjectionOperator(std::vector<State> &trajectory,
                                         std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &alpha,
                                         std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &mu,
                                         std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K);
