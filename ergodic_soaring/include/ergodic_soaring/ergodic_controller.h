@@ -46,31 +46,42 @@ class ErgodicController {
   ErgodicController();
   virtual ~ErgodicController();
   bool Solve(FourierCoefficient &distribution);
-  bool SolveSingleIter(FourierCoefficient &distribution);
+  void SolveSingleIter(FourierCoefficient &distribution, int i);
   void setInitialTrajectory();
   std::vector<State> getTrajectory() { return trajectory_; };
+  std::vector<State> getPreprojectedTrajectory() { return preprojected_trajectory_; };
+  std::vector<State> getLastTrajectory() { return last_trajectory_; };
+
+  static void LinearizeDynamics(const double cruise_speed, const double dt, const Eigen::Vector3d &pos,
+                                Eigen::Matrix<double, NUM_STATES, NUM_STATES> &A,
+                                Eigen::Matrix<double, NUM_STATES, NUM_INPUTS> &B);
+  static void LinearizeTrajectory(const double cruise_speed, const std::vector<State> &trajectory,
+                                  std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
+                                  std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B);
 
  private:
   State Dynamics(const State &state, const Eigen::Matrix<double, NUM_INPUTS, 1> &input);
-  void LinearizeDynamics(const std::vector<State> &trajectory,
-                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
-                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B);
-  void DescentDirection(std::vector<State> &trajectory, FourierCoefficient &distribution,
+  void DescentDirection(const std::vector<State> &trajectory, FourierCoefficient &distribution,
                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B,
                         std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
                         std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v,
                         std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K);
-  Eigen::Matrix<double, NUM_STATES, 1> getCostGradient(State &state, FourierCoefficient &trajectory_distribution,
+  Eigen::Matrix<double, NUM_STATES, 1> getCostGradient(const int N, const State &state,
+                                                       FourierCoefficient &trajectory_distribution,
                                                        FourierCoefficient &distribution);
-  void DescentTrajectory(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
-                         std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v);
-  std::vector<State> ProjectionOperator(std::vector<State> &trajectory,
-                                        std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &alpha,
-                                        std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &mu,
-                                        std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K);
+  void DescentTrajectory(const std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &alpha,
+                         std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &mu,
+                         std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
+                         std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v, const double gamma);
+  void ProjectionOperator(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &alpha,
+                          std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &mu,
+                          std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K);
   std::shared_ptr<FourierCoefficient> distribution_coefficients;
   std::vector<State> trajectory_;
+  std::vector<State> last_trajectory_;
+  std::vector<State> preprojected_trajectory_;
+  double cruise_speed_{15.0};
 };
 
 #endif
