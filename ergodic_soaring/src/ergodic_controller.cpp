@@ -57,19 +57,24 @@ void ErgodicController::setInitialTrajectory() {
   }
 }
 
-void ErgodicController::LinearizeDynamics(
-    const std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
+void ErgodicController::LinearizeDynamics(const double cruise_speed, const double dt, const Eigen::Vector3d &pos,
+                                          Eigen::Matrix<double, NUM_STATES, NUM_STATES> &A,
+                                          Eigen::Matrix<double, NUM_STATES, NUM_INPUTS> &B) {  // Dubins plane
+  double yaw = pos(2);
+  // Linearize dynamics
+  A << 1.0, 0.0, dt * cruise_speed * std::cos(yaw), 0.0, 1.0, dt * cruise_speed * std::sin(yaw), 0.0, 0.0, 1.0;
+  B << 0.0, 0.0, dt;
+}
+
+void ErgodicController::LinearizeTrajectory(
+    const double cruise_speed, const std::vector<State> &trajectory,
+    std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
     std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B) {  // Dubins plane
 
-  for (auto state : trajectory) {
+  for (const auto &state : trajectory) {
     Eigen::Matrix<double, NUM_STATES, NUM_STATES> An;
     Eigen::Matrix<double, NUM_STATES, NUM_INPUTS> Bn;
-    double yaw = state.position(2);
-    double dt = state.dt;
-    // Linearize dynamics
-    An << 1.0, 0.0, -dt * cruise_speed_ * std::sin(yaw), 0.0, 1.0, dt * cruise_speed_ * std::cos(yaw), 0.0, 0.0, 1.0;
-    Bn << 0.0, 0.0, dt;
-
+    LinearizeDynamics(cruise_speed, state.dt, state.position, An, Bn);
     A.push_back(An);
     B.push_back(Bn);
   }
@@ -89,7 +94,6 @@ State ErgodicController::Dynamics(const State &state,
     next_position(0) = current_position(0) + cruise_speed_ * dt * std::cos(yaw);
     next_position(1) = current_position(1) + cruise_speed_ * dt * std::sin(yaw);
   } else {
-    /// TODO: Check if this is correct
     next_position(0) = current_position(0) + (cruise_speed_ / input(0)) * (std::sin(next_yaw) - std::sin(yaw));
     next_position(1) = current_position(1) + (cruise_speed_ / input(0)) * (-std::cos(next_yaw) + std::cos(yaw));
   }
@@ -119,11 +123,13 @@ Eigen::Matrix<double, NUM_STATES, 1> ErgodicController::getCostGradient(const in
   }
 
   Eigen::Matrix<double, NUM_STATES, 1> ergodic_gradient;
-  ergodic_gradient = distribution.getErgodicGradient(N, state, trajectory_distribution.getCoefficients());
+  ergodic_gradient = trajectory_distribution.getErgodicGradient(N, state, distribution.getCoefficients());
   // std::cout << "   - ergodic_gradient: " << ergodic_gradient.transpose() << std::endl;
   gradient = q * ergodic_gradient + c_b * boundary_gradient;
   // std::cout << "ergodic_gradient: " << ergodic_gradient.transpose() << " boundary_gradient: " <<
   // boundary_gradient.transpose() << std::endl;
+  // Since ergodicity is only calculated in R^2 we need to project it down
+  gradient(2) = 0.0;
   return gradient;
 }
 
@@ -205,7 +211,7 @@ void ErgodicController::SolveSingleIter(FourierCoefficient &distribution, int i)
   // Linearize dynamics along the trajectory
   std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> A;
   std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> B;
-  LinearizeDynamics(trajectory_, A, B);
+  LinearizeTrajectory(cruise_speed_, trajectory_, A, B);
 
   /// Compute Descent direction
   std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> K;
@@ -220,7 +226,7 @@ void ErgodicController::SolveSingleIter(FourierCoefficient &distribution, int i)
   std::vector<Eigen::Matrix<double, NUM_STATES, 1>> Alpha = Z;  // State Descent direction
   std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> Mu = U;     // Input Descent direction
   DescentTrajectory(trajectory_, Alpha, Mu, Z, U, gamma);
-  ///TODO: Why is the last trajectory and the preprojected trajectory the same?
+  /// TODO: Why is the last trajectory and the preprojected trajectory the same?
   preprojected_trajectory_.clear();
   for (size_t k = 0; k < trajectory_.size(); k++) {
     State state;
@@ -247,20 +253,17 @@ void ErgodicController::DescentTrajectory(const std::vector<State> &trajectory,
   }
 }
 
-void ErgodicController::ProjectionOperator(
-    std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &alpha,
-    std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &mu,
-    std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K) {
-  std::vector<State> projected_trajectory;
+void ErgodicController::ProjectionOperator(std::vector<State> &trajectory,
+                                           std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &alpha,
+                                           std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &mu,
+                                           std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K) {
   // Projection operator to handle nonlinear dynamics constraint
   const int N = trajectory.size();
   double max_u = 2.0;
   double min_u = -2.0;
+
   for (size_t n = 0; n < N - 1; n++) {
     Eigen::Matrix<double, NUM_INPUTS, 1> u_n = mu[n] + K[n] * (alpha[n] - trajectory[n].position);
-    // std::cout <<"  mu[" << n << "]: " << mu[n].transpose() << std::endl;
-    // std::cout <<"  alpha[" << n << "]: " << alpha[n].transpose() << "  trajectory[" << n << "]: " <<
-    // trajectory[n].position.transpose() << std::endl;
     u_n(0) = std::min(std::max(u_n(0), min_u), max_u);
     trajectory[n + 1] = Dynamics(trajectory[n], u_n);
   }

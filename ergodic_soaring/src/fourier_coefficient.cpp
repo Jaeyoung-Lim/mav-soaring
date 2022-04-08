@@ -101,20 +101,20 @@ void FourierCoefficient::InverseFourierTransform(const std::string layer) {
   // std::cout << "  - Sum of distribution: " << sum << std::endl;
 }
 
-double FourierCoefficient::getErgodicity(Eigen::ArrayXXd trajectory_coefficients) {
+double FourierCoefficient::getErgodicity(Eigen::ArrayXXd target_coefficients) {
   double ergodicity{0.0};
   // std::cout << "Start sum: " << std::endl;
   for (int i = 0; i < K_; i++) {
     for (int j = 0; j < K_; j++) {
       double sigma_k = 1 / std::pow(1 + std::pow(Eigen::Vector2d(i, j).norm(), 2), 1.5);
-      ergodicity += sigma_k * std::pow(trajectory_coefficients(i, j) - coefficients_(i, j), 2);
+      ergodicity += sigma_k * std::pow(coefficients_(i, j) - target_coefficients(i, j), 2);
     }
   }
   return ergodicity;
 }
 
 Eigen::Matrix<double, 3, 1> FourierCoefficient::getErgodicGradient(const int N, const State &state,
-                                                                   Eigen::ArrayXXd trajectory_coefficients) {
+                                                                   Eigen::ArrayXXd target_coefficients) {
   double L_1 = grid_map_.getLength()[0];
   double L_2 = grid_map_.getLength()[1];
 
@@ -125,7 +125,7 @@ Eigen::Matrix<double, 3, 1> FourierCoefficient::getErgodicGradient(const int N, 
     for (int j = 0; j < K_; j++) {
       double sigma_k = 1 / std::pow(1 + std::pow(Eigen::Vector2d(i, j).norm(), 2), 1.5);
       Eigen::Matrix<double, 3, 1> delta_F_k = GradientBasisFunction(i, L_1, pos(0), j, L_2, pos(1));
-      gradient += (2 / N + 1) * sigma_k * (trajectory_coefficients(i, j) - coefficients_(i, j)) * delta_F_k;
+      gradient += (2 / N + 1) * sigma_k * (coefficients_(i, j) - target_coefficients(i, j)) * delta_F_k;
     }
   }
   return gradient;

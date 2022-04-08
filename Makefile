@@ -11,5 +11,7 @@ build-test:
 	catkin config --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCATKIN_ENABLE_TESTING=True
 	catkin build thermal_soaring ergodic_soaring --no-deps -v -i --catkin-make-args tests
 
-test:
+run-test:
 	Tools/run_test.sh
+
+test: build-test run-test

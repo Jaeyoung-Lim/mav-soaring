@@ -66,9 +66,8 @@ class FourierCoefficient {
   Eigen::ArrayXXd getCoefficients() { return coefficients_; };
   Eigen::ArrayXXd getNormalization() { return normalization_; };
   int getNumberOfCoefficients() const { return K_; };
-  double getErgodicity(Eigen::ArrayXXd trajectory_coefficients);
-  Eigen::Matrix<double, 3, 1> getErgodicGradient(const int N, const State &state,
-                                                 Eigen::ArrayXXd trajectory_coefficients);
+  double getErgodicity(Eigen::ArrayXXd target_coefficients);
+  Eigen::Matrix<double, 3, 1> getErgodicGradient(const int N, const State &state, Eigen::ArrayXXd target_coefficients);
 
  private:
   inline double BasisFunction(const int k, const double length, const double x) {

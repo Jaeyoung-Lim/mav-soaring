@@ -53,20 +53,20 @@ geometry_msgs::PoseStamped vector3d2PoseStampedMsg(const Eigen::Vector3d positio
   return encode_msg;
 }
 
-void PublishTrajectory(ros::Publisher& pub, std::vector<State> trajectory) {
-    Eigen::Vector4d vehicle_attitude(1.0, 0.0, 0.0, 0.0);
-    std::vector<geometry_msgs::PoseStamped> trajectory_vector;
-    for (auto state : trajectory) {
-      trajectory_vector.insert(
-          trajectory_vector.end(),
-          vector3d2PoseStampedMsg(Eigen::Vector3d(state.position(0), state.position(1), 10.0), vehicle_attitude));
-    }
+void PublishTrajectory(ros::Publisher &pub, std::vector<State> trajectory) {
+  Eigen::Vector4d vehicle_attitude(1.0, 0.0, 0.0, 0.0);
+  std::vector<geometry_msgs::PoseStamped> trajectory_vector;
+  for (auto state : trajectory) {
+    trajectory_vector.insert(
+        trajectory_vector.end(),
+        vector3d2PoseStampedMsg(Eigen::Vector3d(state.position(0), state.position(1), 10.0), vehicle_attitude));
+  }
 
-    nav_msgs::Path msg;
-    msg.header.stamp = ros::Time::now();
-    msg.header.frame_id = "world";
-    msg.poses = trajectory_vector;
-    pub.publish(msg);
+  nav_msgs::Path msg;
+  msg.header.stamp = ros::Time::now();
+  msg.header.frame_id = "world";
+  msg.poses = trajectory_vector;
+  pub.publish(msg);
 }
 
 void generateGaussianDistribution(grid_map::GridMap &grid_map) {
