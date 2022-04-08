@@ -33,7 +33,7 @@
 #ifndef ERGODIC_CONTROLLER_H
 #define ERGODIC_CONTROLLER_H
 
-#define NUM_STATES 3
+#define NUM_STATES 4
 #define NUM_INPUTS 1
 
 #include "ergodic_soaring/fourier_coefficient.h"

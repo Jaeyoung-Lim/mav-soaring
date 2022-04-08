@@ -62,8 +62,11 @@ void ErgodicController::LinearizeDynamics(const double cruise_speed, const doubl
                                           Eigen::Matrix<double, NUM_STATES, NUM_INPUTS> &B) {  // Dubins plane
   double yaw = pos(2);
   // Linearize dynamics
-  A << 1.0, 0.0, dt * cruise_speed * std::cos(yaw), 0.0, 1.0, dt * cruise_speed * std::sin(yaw), 0.0, 0.0, 1.0;
-  B << 0.0, 0.0, dt;
+  A << 1.0, 0.0, dt * cruise_speed * std::cos(yaw), 0.0, 
+        0.0, 1.0, dt * cruise_speed * std::sin(yaw), 0.0,
+        0.0, 0.0, 1.0, dt,
+        0.0, 0.0, 0.0, 1.0;
+  B << 0.0, 0.0, 0.0, dt;
 }
 
 void ErgodicController::LinearizeTrajectory(
