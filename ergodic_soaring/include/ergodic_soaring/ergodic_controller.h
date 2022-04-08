@@ -33,9 +33,6 @@
 #ifndef ERGODIC_CONTROLLER_H
 #define ERGODIC_CONTROLLER_H
 
-#define NUM_STATES 3
-#define NUM_INPUTS 2
-
 #include "ergodic_soaring/fourier_coefficient.h"
 
 #include <Eigen/Dense>
@@ -52,7 +49,8 @@ class ErgodicController {
   std::vector<State> getPreprojectedTrajectory() { return preprojected_trajectory_; };
   std::vector<State> getLastTrajectory() { return last_trajectory_; };
 
-  static void LinearizeDynamics(const double cruise_speed, const double dt, const Eigen::Vector3d &pos, const double input,
+  static void LinearizeDynamics(const double cruise_speed, const double dt, const Eigen::Vector3d &pos,
+                                const Eigen::Matrix<double, NUM_INPUTS, 1> input,
                                 Eigen::Matrix<double, NUM_STATES, NUM_STATES> &A,
                                 Eigen::Matrix<double, NUM_STATES, NUM_INPUTS> &B);
   static void LinearizeTrajectory(const double cruise_speed, const std::vector<State> &trajectory,

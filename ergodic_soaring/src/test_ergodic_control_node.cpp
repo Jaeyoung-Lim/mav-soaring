@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
     }
 
     if (iter > max_iterations) break;
-    ros::Duration(1.0).sleep();
+    // ros::Duration(1.0).sleep();
     iter++;
   }
 

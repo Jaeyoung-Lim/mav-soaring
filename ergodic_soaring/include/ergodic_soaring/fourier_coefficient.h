@@ -40,6 +40,9 @@
 #include <Eigen/Dense>
 #include <vector>
 
+#define NUM_STATES 3
+#define NUM_INPUTS 2
+
 struct Settings {
   double center_lat{0.0};
   double center_lon{0.0};
@@ -49,9 +52,9 @@ struct Settings {
 };
 
 struct State {
-  Eigen::Vector3d position{Eigen::Vector3d::Zero()};  // x, y, heading
-  double input{0.0};                                  // yaw rate
-  double dt{0.1};                                     // Time step
+  Eigen::Vector3d position{Eigen::Vector3d::Zero()};                                         // x, y, heading
+  Eigen::Matrix<double, NUM_INPUTS, 1> input{Eigen::Matrix<double, NUM_INPUTS, 1>::Zero()};  // yaw rate
+  double dt{0.1};                                                                            // Time step
 };
 
 class FourierCoefficient {
