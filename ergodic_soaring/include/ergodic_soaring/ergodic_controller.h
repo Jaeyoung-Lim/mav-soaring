@@ -75,6 +75,13 @@ class ErgodicController {
   void ProjectionOperator(std::vector<State> &trajectory, std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &alpha,
                           std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &mu,
                           std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K);
+  double wrapPi(double theta) {
+    while(std::abs(theta) > M_PI) {
+      if (theta > M_PI) theta = theta - 2* M_PI;
+      else if (theta < -M_PI) theta = theta + 2* M_PI;
+    }
+    return theta;
+  };
   std::shared_ptr<FourierCoefficient> distribution_coefficients;
   std::vector<State> trajectory_;
   std::vector<State> last_trajectory_;

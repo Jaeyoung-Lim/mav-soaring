@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
   /// TODO: Add interface for single iteration visualization
   ergodic_controller->setInitialTrajectory();
   int iter{1};
-  int max_iterations{200};
+  int max_iterations{1000};
 
   while (true) {
     ergodic_controller->SolveSingleIter(target_distribution, iter);
