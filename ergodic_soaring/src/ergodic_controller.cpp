@@ -57,7 +57,7 @@ void ErgodicController::setInitialTrajectory() {
   }
 }
 
-void ErgodicController::LinearizeDynamics(const double cruise_speed, const double dt, const Eigen::Vector3d &pos,
+void ErgodicController::LinearizeDynamics(const double cruise_speed, const double dt, const Eigen::Vector3d &pos, const double input,
                                           Eigen::Matrix<double, NUM_STATES, NUM_STATES> &A,
                                           Eigen::Matrix<double, NUM_STATES, NUM_INPUTS> &B) {  // Dubins plane
   double yaw = pos(2);
@@ -74,7 +74,7 @@ void ErgodicController::LinearizeTrajectory(
   for (const auto &state : trajectory) {
     Eigen::Matrix<double, NUM_STATES, NUM_STATES> An;
     Eigen::Matrix<double, NUM_STATES, NUM_INPUTS> Bn;
-    LinearizeDynamics(cruise_speed, state.dt, state.position, An, Bn);
+    LinearizeDynamics(cruise_speed, state.dt, state.position, state.input, An, Bn);
     A.push_back(An);
     B.push_back(Bn);
   }
