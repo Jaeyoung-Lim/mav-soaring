@@ -54,6 +54,11 @@ add_executable(test_ergodic_control_node
 )
 target_link_libraries(test_ergodic_control_node ${PROJECT_NAME} ${catkin_LIBRARIES})
 
+add_executable(test_ergodic_gradient_node
+  src/test_ergodic_gradient_node.cpp
+)
+target_link_libraries(test_ergodic_gradient_node ${PROJECT_NAME} ${catkin_LIBRARIES})
+
 ##########
 # TESTING#
 ##########
