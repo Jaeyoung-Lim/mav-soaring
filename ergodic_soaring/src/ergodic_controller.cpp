@@ -134,8 +134,8 @@ Eigen::Matrix<double, NUM_STATES, 1> ErgodicController::getCostGradient(const in
 }
 
 void ErgodicController::DescentDirection(const std::vector<State> &trajectory, FourierCoefficient &distribution,
-                                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
-                                         std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B,
+                                         const std::vector<Eigen::Matrix<double, NUM_STATES, NUM_STATES>> &A,
+                                         const std::vector<Eigen::Matrix<double, NUM_STATES, NUM_INPUTS>> &B,
                                          std::vector<Eigen::Matrix<double, NUM_STATES, 1>> &z,
                                          std::vector<Eigen::Matrix<double, NUM_INPUTS, 1>> &v,
                                          std::vector<Eigen::Matrix<double, NUM_INPUTS, NUM_STATES>> &K) {
